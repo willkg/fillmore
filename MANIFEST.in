@@ -1,0 +1,6 @@
+include HISTORY.rst
+include LICENSE
+include MANIFEST.in
+include README.rst
+include requirements-dev.txt
+include tox.ini
