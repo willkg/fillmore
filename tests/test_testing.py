@@ -31,7 +31,10 @@ def test_capture_events():
         except Exception as exc:
             sentry_sdk.capture_exception(exc)
 
-        (event1, event2,) = helper_with_context.events
+        (
+            event1,
+            event2,
+        ) = helper_with_context.events
         assert event1["exception"]["values"][0]["type"] == "Exception"
         assert event1["exception"]["values"][0]["value"] == "intentional"
 

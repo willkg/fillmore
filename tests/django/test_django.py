@@ -37,7 +37,9 @@ def test_scrub_request_headers(sentry_helper, client):
     """Test scrubbing headers"""
     scrubber = Scrubber(
         scrub_rules=[
-            ScrubRule(key_path="request.headers", keys=["Auth-Token"], scrub_function="scrub"),
+            ScrubRule(
+                key_path="request.headers", keys=["Auth-Token"], scrub_function="scrub"
+            ),
         ],
     )
     sentry_helper.init(
@@ -71,7 +73,9 @@ def test_scrub_request_querystring(sentry_helper, client):
         before_send=scrubber,
     )
 
-    resp = client.get("/broken", query_string={"code": "foo", "state": "bar", "color": "pink"})
+    resp = client.get(
+        "/broken", query_string={"code": "foo", "state": "bar", "color": "pink"}
+    )
     assert resp.status_code == 500
 
     # Enforces there's only one event and unpacks it
@@ -94,12 +98,12 @@ def test_scrub_request_cookies(sentry_helper, client):
             ScrubRule(
                 "request.headers",
                 keys=["Cookie"],
-                scrub_function=build_scrub_cookies(params=["csrftoken", "sessionid"])
+                scrub_function=build_scrub_cookies(params=["csrftoken", "sessionid"]),
             ),
             ScrubRule(
                 "request",
                 keys=["cookies"],
-                scrub_function=build_scrub_cookies(params=["csrftoken", "sessionid"])
+                scrub_function=build_scrub_cookies(params=["csrftoken", "sessionid"]),
             ),
         ]
     )
@@ -126,4 +130,8 @@ def test_scrub_request_cookies(sentry_helper, client):
         "foo=bar",
         "sessionid=[Scrubbed]",
     ]
-    assert event["request"]["cookies"] == {'csrftoken': '[Scrubbed]', 'foo': 'bar', 'sessionid': '[Scrubbed]'}
+    assert event["request"]["cookies"] == {
+        "csrftoken": "[Scrubbed]",
+        "foo": "bar",
+        "sessionid": "[Scrubbed]",
+    }
