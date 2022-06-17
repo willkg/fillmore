@@ -5,10 +5,10 @@
 import pytest
 
 from francis.scrubber import (
+    build_scrub_cookies,
+    build_scrub_query_string,
     get_target_dicts,
     scrub,
-    build_scrub_query_string,
-    build_scrub_cookies,
     Scrubber,
     ScrubRule,
 )

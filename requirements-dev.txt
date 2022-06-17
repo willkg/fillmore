@@ -1,5 +1,6 @@
 # Requirements for development
 -e .
+-r requirements-ci.txt
 black==22.3.0
 build==0.8.0
 flake8==4.0.1
@@ -7,5 +8,5 @@ mypy==0.961
 piprot==0.9.11
 pytest==7.1.2
 Sphinx==5.0.1
-tox==3.25.0
 twine==4.0.1
+Werkzeug==2.1.2

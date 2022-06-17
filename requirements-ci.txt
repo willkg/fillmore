@@ -1,0 +1,3 @@
+# Requirements for GitHub actions CI
+tox==3.25.0
+tox-gh-actions==2.9.1
