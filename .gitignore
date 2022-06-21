@@ -2,3 +2,4 @@ src/francis.egg-info
 .tox
 __pycache__
 .python-version
+docs/_build/

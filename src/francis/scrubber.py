@@ -3,11 +3,8 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import importlib
-import json
 import logging
-from pathlib import Path
 from urllib.parse import parse_qsl, urlencode
-import uuid
 from typing import Any, Callable, Generator, List, Union
 
 import attrs
@@ -165,7 +162,7 @@ def str2list(s: str) -> List[str]:
     return s.split(".")
 
 
-class ScrubRuleError(Exception):
+class RuleError(Exception):
     pass
 
 
@@ -176,7 +173,7 @@ def thing2fun(thing: Union[Callable, str]) -> Callable:
 
     If the thing is a dotted Python path to some other function, return that.
 
-    :raise ScrubRuleError: if the thing is not a callable or does not exist
+    :raise RuleError: if the thing is not a callable or does not exist
 
     """
     if callable(thing):
@@ -195,64 +192,63 @@ def thing2fun(thing: Union[Callable, str]) -> Callable:
             try:
                 fn = getattr(module, class_name)
             except AttributeError:
-                raise ScrubRuleError(f"{thing} does not exist")
+                raise RuleError(f"{thing} does not exist")
 
             if callable(fn):
                 return fn
 
-    raise ScrubRuleError(f"{thing} is not a callable or a string or does not exist")
+    raise RuleError(f"{thing} is not a callable or a string or does not exist")
 
 
 @attrs.define
-class ScrubRule:
+class Rule:
     """
 
-    ``key_path`` is a Python dotted path of key names with ``[]`` to denote
+    ``path`` is a Python dotted path of key names with ``[]`` to denote
     arrays to traverse pointing to a dict with values to scrub.
 
     ``keys`` is a list of keys to scrub values of
 
-    ``scrub_function`` is a callable that takes a value and returns a scrubbed value.
+    ``scrub`` is a callable that takes a value and returns a scrubbed value.
     For example::
 
         def hide_letter_a(value>: str) -> str:
             return "".join([letter if letter != "a" else "*" for letter in value])
 
 
-    ScrubRule example::
+    Rule example::
 
-        ScrubRule(
-            key_path="request.data",
+        Rule(
+            path="request.data",
             keys=["csrfmiddlewaretoken"],
-            scrub_function=scrub,
+            scrub=scrub,
         )
 
-        ScrubRule(
-            key_path="request.data",
+        Rule(
+            path="request.data",
             keys=["csrfmiddlewaretoken"],
-            scrub_function="somemodule.scrubfunction",
+            scrub="somemodule.scrubfunction",
         )
-
 
     """
 
-    key_path: List[str] = attrs.field(converter=str2list)
+    path: List[str] = attrs.field(converter=str2list)
     keys: List[str]
-    scrub_function: Callable = attrs.field(converter=thing2fun)
+    scrub: Callable = attrs.field(converter=thing2fun)
 
 
-SCRUB_RULES_DEFAULT: List[ScrubRule] = [
-    # Hide stacktrace variables
-    ScrubRule(
-        key_path="exception.values.[].stacktrace.frames.[].vars",
+SCRUB_RULES_DEFAULT: List[Rule] = [
+    # Hide "username" and "password" in stacktrace frame-local vars
+    Rule(
+        path="exception.values.[].stacktrace.frames.[].vars",
         keys=["username", "password"],
-        scrub_function=scrub,
+        scrub=scrub,
     ),
 ]
 
 
-def get_target_dicts(event: dict, key_path: List[str]) -> Generator[dict, None, None]:
-    """Given a key_path, yields the target dicts.
+def _get_target_dicts(event: dict, path: List[str]) -> Generator[dict, None, None]:
+    """Given a path, yields the target dicts.
 
     Keys should be dict keys. To traverse all the items in an array value, use ``[]``.
 
@@ -272,17 +268,17 @@ def get_target_dicts(event: dict, key_path: List[str]) -> Generator[dict, None, 
             }
         }
 
-    Example key_path values::
+    Example path values::
 
         ["request"]
         ["exception", "stacktrace", "frames", "[]", "vars"]
 
     """
     parent = event
-    for i, part in enumerate(key_path):
+    for i, part in enumerate(path):
         if part == "[]" and isinstance(parent, (tuple, list)):
             for item in parent:
-                yield from get_target_dicts(item, key_path[i + 1 :])
+                yield from _get_target_dicts(item, path[i + 1 :])
             return
 
         elif part in parent:
@@ -305,14 +301,20 @@ class Scrubber:
 
     def __init__(
         self,
-        scrub_rules: List[ScrubRule] = SCRUB_RULES_DEFAULT,
+        rules: List[Rule] = SCRUB_RULES_DEFAULT,
         error_handler: Callable = log_exception,
     ):
         """
-        :arg scrub_keys: list of ScrubRule instances
+        :arg rules: list of Rule instances
+        :param error_handler: function that takes a msg (str) and is called
+            when either a scrub rule or getting the specified key by path in the
+            Sentry event kicks up an error; this lets you emit some kind of signal
+            when the Sentry scrubbing code is failing so it doesn't do it silently.
+
+            By default, this logs an exception.
 
         """
-        self.scrub_rules = scrub_rules
+        self.rules = rules
         self.error_handler = error_handler
 
     def __call__(self, event: dict, hint: Any) -> dict:
@@ -321,22 +323,14 @@ class Scrubber:
         This tries really hard to be very defensive such that even if there are bugs in
         the scrubs, it still emits something to Sentry.
 
-        It will log errors, so we should look for those log statements. They'll all have
-        "LIBSENTRYERROR" in the message making them easy to find regardless of the
-        logger name.
-
-        Further, they emit two incr metrics:
-
-        * scrub_fun_error
-        * get_target_dicts_error
-
-        Put those in a dashboard with alerts so you know when to look in the logs.
+        It will log errors, so we should look for those log statements. They'll
+        all be coming from the "francis.scrubber" logger.
 
         """
 
-        for rule in self.scrub_rules:
+        for rule in self.rules:
             try:
-                for parent in get_target_dicts(event, rule.key_path):
+                for parent in _get_target_dicts(event, rule.path):
                     if not parent:
                         continue
 
@@ -347,9 +341,9 @@ class Scrubber:
                         val = parent[key]
 
                         try:
-                            filtered_val = rule.scrub_function(val)
+                            filtered_val = rule.scrub(val)
                         except Exception as inner_exc:
-                            msg = f"scrub fun error: {rule.scrub_function}, error: {inner_exc}"
+                            msg = f"scrub fun error: {rule.scrub}, error: {inner_exc}"
                             log_exception(msg)
                             try:
                                 self.error_handler(msg)
@@ -369,49 +363,3 @@ class Scrubber:
                     log_exception("error in error_handler")
 
         return event
-
-
-class ConfigurationError(Exception):
-    pass
-
-
-class SaveEvents:
-    """Utility wrapper for saving Sentry events to files on disk.
-
-    This is for collecting Sentry event data to build tests to verify scrubbing
-    is working as you need it to.
-
-    .. Note::
-
-       Capturing Sentry event data and writing tests against that is fragile
-       and not as good as writing integration tests that kick up Sentry events
-       that then get scrubbed.
-
-       Make sure to update captured data periodically. This will avoid skew
-       from sentry_sdk updates where they change the shape of the events or
-       what's included in events as well as changes to your code which changes
-       frame-local vars, context data, and so on.
-
-    Usage:
-
-        scrubber = Scrubber()
-        scrubber = SaveEvents(wrapped_scrubber=scrubber, outputdir="/some/path")
-
-    """
-
-    def __init__(self, wrapped_scrubber: Scrubber, outputdir: str):
-        self.wrapped_scrubber = wrapped_scrubber
-        self.outputdir = Path(outputdir)
-        if not self.outputdir.is_dir():
-            raise ConfigurationError(f"outputdir {outputdir} does not exist")
-
-    def __call__(self, event: dict, hint: Any) -> dict:
-        try:
-            event_id = uuid.uuid4().hex
-            path = self.outputdir / f"{event_id}.json"
-            data = json.dumps(event)
-            path.write_text(data)
-        except Exception as exc:
-            log_exception(f"error in SaveEvents.__call__: {exc}")
-
-        return self.wrapped_scrubber(event=event, hint=hint)

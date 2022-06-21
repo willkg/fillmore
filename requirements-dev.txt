@@ -8,5 +8,6 @@ mypy==0.961
 piprot==0.9.11
 pytest==7.1.2
 Sphinx==5.0.1
+sphinx-rtd-theme==1.0.0
 twine==4.0.1
 Werkzeug==2.1.2

@@ -10,9 +10,15 @@ from francis.scrubber import (
     build_scrub_cookies,
     build_scrub_query_string,
     Scrubber,
-    ScrubRule,
+    Rule,
 )
 from tests.django.myapp.wsgi import application
+
+
+INIT_KWARGS = {
+    "auto_enabling_integrations": False,
+    "integrations": [DjangoIntegration()],
+}
 
 
 @pytest.fixture
@@ -22,67 +28,65 @@ def client():
 
 def test_scaffolding(sentry_helper, client):
     """Verifies the scaffolding for django integration tests is working"""
-    sentry_helper.init(integrations=[DjangoIntegration()])
-    resp = client.get("/broken")
-    assert resp.status_code == 500
+    with sentry_helper.init(**INIT_KWARGS) as sentry_client:
+        resp = client.get("/broken")
+        assert resp.status_code == 500
 
-    # Enforces there's only one event and unpacks it
-    (event,) = sentry_helper.events
+        # Enforces there's only one event and unpacks it
+        (event,) = sentry_client.events
 
-    assert "django" in event["sdk"]["integrations"]
-    assert "request" in event
+        assert "django" in event["sdk"]["integrations"]
+        assert "request" in event
 
 
 def test_scrub_request_headers(sentry_helper, client):
     """Test scrubbing headers"""
     scrubber = Scrubber(
-        scrub_rules=[
-            ScrubRule(
-                key_path="request.headers", keys=["Auth-Token"], scrub_function="scrub"
-            ),
+        rules=[
+            Rule(path="request.headers", keys=["Auth-Token"], scrub="scrub"),
         ],
     )
-    sentry_helper.init(
-        integrations=[DjangoIntegration()],
-        before_send=scrubber,
-    )
+    kwargs = dict(INIT_KWARGS)
+    kwargs["before_send"] = scrubber
+    with sentry_helper.init(**kwargs) as sentry_client:
+        resp = client.get("/broken", headers=[("Auth-Token", "abcde")])
+        assert resp.status_code == 500
 
-    resp = client.get("/broken", headers=[("Auth-Token", "abcde")])
-    assert resp.status_code == 500
+        # Enforces there's only one event and unpacks it
+        (event,) = sentry_client.events
 
-    # Enforces there's only one event and unpacks it
-    (event,) = sentry_helper.events
-
-    assert event["request"]["headers"]["Auth-Token"] == "[Scrubbed]"
-    assert event["request"]["headers"]["Host"] == "localhost"
+        assert event["request"]["headers"]["Auth-Token"] == "[Scrubbed]"
+        assert event["request"]["headers"]["Host"] == "localhost"
 
 
 def test_scrub_request_querystring(sentry_helper, client):
     """Test scrubbing querystring which is in the query_string field as a single string"""
     scrubber = Scrubber(
-        scrub_rules=[
-            ScrubRule(
-                key_path="request",
+        rules=[
+            Rule(
+                path="request",
                 keys=["query_string"],
-                scrub_function=build_scrub_query_string(params=["code", "state"]),
+                scrub=build_scrub_query_string(params=["code", "state"]),
             ),
         ],
     )
-    sentry_helper.init(
-        integrations=[DjangoIntegration()],
-        before_send=scrubber,
-    )
+    kwargs = dict(INIT_KWARGS)
+    kwargs["before_send"] = scrubber
+    with sentry_helper.init(**kwargs) as sentry_client:
+        resp = client.get(
+            "/broken", query_string={"code": "foo", "state": "bar", "color": "pink"}
+        )
+        assert resp.status_code == 500
 
-    resp = client.get(
-        "/broken", query_string={"code": "foo", "state": "bar", "color": "pink"}
-    )
-    assert resp.status_code == 500
+        # Enforces there's only one event and unpacks it
+        (event,) = sentry_client.events
 
-    # Enforces there's only one event and unpacks it
-    (event,) = sentry_helper.events
-
-    query_string = list(sorted(event["request"]["query_string"].split("&")))
-    assert query_string == ["code=%5BScrubbed%5D", "color=pink", "state=%5BScrubbed%5D"]
+        query_string = list(sorted(event["request"]["query_string"].split("&")))
+        assert query_string == [
+            "code=%5BScrubbed%5D",
+            "color=pink",
+            "state=%5BScrubbed%5D",
+        ]
 
 
 def test_scrub_request_cookies(sentry_helper, client):
@@ -94,44 +98,42 @@ def test_scrub_request_cookies(sentry_helper, client):
 
     """
     scrubber = Scrubber(
-        scrub_rules=[
-            ScrubRule(
-                "request.headers",
+        rules=[
+            Rule(
+                path="request.headers",
                 keys=["Cookie"],
-                scrub_function=build_scrub_cookies(params=["csrftoken", "sessionid"]),
+                scrub=build_scrub_cookies(params=["csrftoken", "sessionid"]),
             ),
-            ScrubRule(
-                "request",
+            Rule(
+                path="request",
                 keys=["cookies"],
-                scrub_function=build_scrub_cookies(params=["csrftoken", "sessionid"]),
+                scrub=build_scrub_cookies(params=["csrftoken", "sessionid"]),
             ),
         ]
     )
-    sentry_helper.init(
-        integrations=[DjangoIntegration()],
-        before_send=scrubber,
-        send_default_pii=True,
-    )
+    kwargs = dict(INIT_KWARGS)
+    kwargs["send_default_pii"] = True
+    kwargs["before_send"] = scrubber
+    with sentry_helper.init(**kwargs) as sentry_client:
+        # Add a bunch of cookies
+        client.set_cookie(server_name="localhost", key="csrftoken", value="abcde")
+        client.set_cookie(server_name="localhost", key="sessionid", value="someid")
+        client.set_cookie(server_name="localhost", key="foo", value="bar")
 
-    # Add a bunch of cookies
-    client.set_cookie(server_name="localhost", key="csrftoken", value="abcde")
-    client.set_cookie(server_name="localhost", key="sessionid", value="someid")
-    client.set_cookie(server_name="localhost", key="foo", value="bar")
+        resp = client.get("/broken")
+        assert resp.status_code == 500
 
-    resp = client.get("/broken")
-    assert resp.status_code == 500
+        # Enforces there's only one event and unpacks it
+        (event,) = sentry_client.events
 
-    # Enforces there's only one event and unpacks it
-    (event,) = sentry_helper.events
-
-    cookie_header = list(sorted(event["request"]["headers"]["Cookie"].split("; ")))
-    assert cookie_header == [
-        "csrftoken=[Scrubbed]",
-        "foo=bar",
-        "sessionid=[Scrubbed]",
-    ]
-    assert event["request"]["cookies"] == {
-        "csrftoken": "[Scrubbed]",
-        "foo": "bar",
-        "sessionid": "[Scrubbed]",
-    }
+        cookie_header = list(sorted(event["request"]["headers"]["Cookie"].split("; ")))
+        assert cookie_header == [
+            "csrftoken=[Scrubbed]",
+            "foo=bar",
+            "sessionid=[Scrubbed]",
+        ]
+        assert event["request"]["cookies"] == {
+            "csrftoken": "[Scrubbed]",
+            "foo": "bar",
+            "sessionid": "[Scrubbed]",
+        }

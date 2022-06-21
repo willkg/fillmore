@@ -1,16 +1,58 @@
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, List
+import json
+import logging
+from pathlib import Path
+from typing import Any, Dict, Generator, List
+from urllib.parse import urlparse
+import uuid
 
 import sentry_sdk
 from sentry_sdk.transport import Transport
 
+from francis.scrubber import Scrubber
 
-class CaptureTransport(Transport):
-    def __init__(self, capture_event_callback: Callable) -> None:
+
+logger = logging.getLogger(__name__)
+
+
+def get_sentry_base_url(sentry_dsn: str) -> str:
+    """Given a sentry_dsn, returns the base url
+
+    This is helpful for tests that need the url to the fakesentry api.
+
+    :arg sentry_dsn: the sentry base url
+
+    """
+    if not sentry_dsn:
+        raise Exception("sentry_dsn required")
+
+    parsed_dsn = urlparse(sentry_dsn)
+    netloc = parsed_dsn.netloc
+    if "@" in netloc:
+        netloc = netloc[netloc.find("@") + 1 :]
+
+    return f"{parsed_dsn.scheme}://{netloc}/"
+
+
+class _CaptureTransport(Transport):
+    def __init__(self) -> None:
         Transport.__init__(self)
-        self.capture_event: Callable = capture_event_callback
-        self.capture_envelope: Callable = lambda *args, **kwargs: None
         self._queue = None
+
+        self.events: List[Dict[Any, Any]] = []
+
+    def capture_event(self, event: Dict[Any, Any]) -> None:
+        self.events.append(event)
+
+    def capture_envelope(self, envelope: Any) -> None:
+        pass
+
+    def reset(self) -> None:
+        self.events = []
+
+
+class ReuseException(Exception):
+    pass
 
 
 class SentryTestHelper:
@@ -21,21 +63,99 @@ class SentryTestHelper:
     """
 
     def __init__(self) -> None:
-        self.events: List[Dict[Any, Any]] = []
+        self._transport = _CaptureTransport()
 
-    def capture_event(self, event: Dict[Any, Any]) -> None:
-        self.events.append(event)
+    @property
+    def events(self) -> List[Dict[Any, Any]]:
+        return self._transport.events
+
+    def reset(self) -> None:
+        self._transport.reset()
 
     @contextmanager
-    def session_context(self) -> Generator["SentryTestHelper", None, None]:
-        self.events = []
+    def init(
+        self, *args: Any, **kwargs: Any
+    ) -> Generator["SentryTestHelper", None, None]:
+        """Create a new sentry_sdk client with specified args
+
+        Arguments are the same as to sentry_sdk.Client.
+
+        """
         with sentry_sdk.Hub(None):
+            hub = sentry_sdk.Hub.current
+            client = sentry_sdk.Client(*args, **kwargs)
+            hub.bind_client(client)
+
+            self._transport.reset()
+            client.transport = self._transport
             yield self
 
-    def init(self, *args: Any, **kwargs: Any) -> None:
-        """Use the args for sentry_sdk.Client"""
-        self.events = []
-        hub = sentry_sdk.Hub.current
-        client = sentry_sdk.Client(*args, **kwargs)
-        hub.bind_client(client)
-        client.transport = CaptureTransport(self.capture_event)
+    @contextmanager
+    def reuse(self) -> Generator["SentryTestHelper", None, None]:
+        """Re-use the current sentry_sdk client, but patch the transport
+
+        This lets you capture events that are being sent out.
+
+        :raises ReuseException: if there's no sentry client initialized
+
+        """
+        client = sentry_sdk.Hub.current.client
+        if not client:
+            raise ReuseException("there is no client to reuse")
+
+        old_transport = client.transport
+        try:
+            client.transport = self._transport
+            self._transport.reset()
+            yield self
+        finally:
+            client.transport = old_transport
+
+
+class ConfigurationError(Exception):
+    pass
+
+
+class SaveEvents:
+    """Utility wrapper for saving Sentry events to files on disk.
+
+    This is for collecting Sentry event data to build tests to verify scrubbing
+    is working as you need it to.
+
+    .. Note::
+
+       Capturing Sentry event data and writing tests against that is fragile
+       and not as good as writing integration tests that kick up Sentry events
+       that then get scrubbed.
+
+       Make sure to update captured data periodically. This will avoid skew
+       from sentry_sdk updates where they change the shape of the events or
+       what's included in events as well as changes to your code which changes
+       frame-local vars, context data, and so on.
+
+    Usage::
+
+        scrubber = Scrubber( ... )
+        scrubber = SaveEvents(
+            wrapped_scrubber=scrubber,
+            outputdir="/some/path"
+        )
+
+    """
+
+    def __init__(self, wrapped_scrubber: Scrubber, outputdir: str):
+        self.wrapped_scrubber = wrapped_scrubber
+        self.outputdir = Path(outputdir)
+        if not self.outputdir.is_dir():
+            raise ConfigurationError(f"outputdir {outputdir} does not exist")
+
+    def __call__(self, event: dict, hint: Any) -> dict:
+        try:
+            event_id = uuid.uuid4().hex
+            path = self.outputdir / f"{event_id}.json"
+            data = json.dumps(event)
+            path.write_text(data)
+        except Exception as exc:
+            logger.exception(f"error in SaveEvents.__call__: {exc}")
+
+        return self.wrapped_scrubber(event=event, hint=hint)

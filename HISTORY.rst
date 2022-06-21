@@ -1,7 +1,7 @@
 History
 =======
 
-0.1.0 (In development)
+0.1.0 (in development)
 ----------------------
 
-Inital extraction and writing.
+* Inital extraction and writing.

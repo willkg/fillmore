@@ -7,10 +7,10 @@ import pytest
 from francis.scrubber import (
     build_scrub_cookies,
     build_scrub_query_string,
-    get_target_dicts,
+    _get_target_dicts,
     scrub,
     Scrubber,
-    ScrubRule,
+    Rule,
 )
 
 
@@ -159,7 +159,7 @@ def test_scrub_query_string(qs, keys, expected):
 
 
 @pytest.mark.parametrize(
-    "event, key_path, expected",
+    "event, path, expected",
     [
         # Test empty things
         (
@@ -198,30 +198,30 @@ def test_scrub_query_string(qs, keys, expected):
         ),
     ],
 )
-def test_get_target_paths(event, key_path, expected):
-    assert list(get_target_dicts(event, key_path)) == expected
+def test_get_target_paths(event, path, expected):
+    assert list(_get_target_dicts(event, path)) == expected
 
 
 @pytest.mark.parametrize(
-    "scrub_rules, event, expected",
+    "rules, event, expected",
     [
         ([], {}, {}),
         (
-            [ScrubRule(key_path="foo", keys=["bar"], scrub_function=scrub)],
+            [Rule(path="foo", keys=["bar"], scrub=scrub)],
             {"foo": {"bar": "somevalue"}, "foo2": "othervalue"},
             {"foo": {"bar": "[Scrubbed]"}, "foo2": "othervalue"},
         ),
         (
-            [ScrubRule(key_path="foo", keys=["bar"], scrub_function="scrub")],
+            [Rule(path="foo", keys=["bar"], scrub="scrub")],
             {"foo": {"bar": "somevalue"}, "foo2": "othervalue"},
             {"foo": {"bar": "[Scrubbed]"}, "foo2": "othervalue"},
         ),
         (
             [
-                ScrubRule(
-                    key_path="frames.[].vars",
+                Rule(
+                    path="frames.[].vars",
                     keys=["code_id", "state"],
-                    scrub_function=scrub,
+                    scrub=scrub,
                 ),
             ],
             {
@@ -249,17 +249,22 @@ def test_get_target_paths(event, key_path, expected):
         # us support a possible structure variation of request.data which could be a
         # data structure or a string.
         (
-            [ScrubRule(key_path="request.data", keys=["bar"], scrub_function=scrub)],
+            [Rule(path="request.data", keys=["bar"], scrub=scrub)],
             {"request": {"data": "abcde"}},
             {"request": {"data": "abcde"}},
         ),
         (
-            [ScrubRule(key_path="request.data", keys=["bar"], scrub_function=scrub)],
+            [Rule(path="request.data", keys=["bar"], scrub=scrub)],
             {"request": {"data": {"bar": "abcde"}}},
             {"request": {"data": {"bar": "[Scrubbed]"}}},
         ),
     ],
 )
-def test_Scrubber(scrub_rules, event, expected):
-    scrubber = Scrubber(scrub_rules=scrub_rules)
+def test_Scrubber(rules, event, expected):
+    scrubber = Scrubber(rules=rules)
     assert scrubber(event, {}) == expected
+
+
+# FIXME(willkg): test exception logging in scrub errors
+
+# FIXME(willkg): test error_handler

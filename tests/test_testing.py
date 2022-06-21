@@ -1,28 +1,34 @@
-import json
-
+import pytest
 import sentry_sdk
+from sentry_sdk.integrations.stdlib import StdlibIntegration
 
-from francis.testing import SentryTestHelper
+from francis.scrubber import Scrubber, Rule
+from francis.testing import SentryTestHelper, get_sentry_base_url
 
 
-def test_capture_events():
-    """Test the helper to make sure it's usable.
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        ("http://localhost/0", "http://localhost/"),
+        ("http://localhost:8000/0", "http://localhost:8000/"),
+        ("http://foo:bar@localhost:8000/0", "http://localhost:8000/"),
+    ],
+)
+def test_get_sentry_base_url(url, expected):
+    assert get_sentry_base_url(url) == expected
 
-    NOTE(willkg): We use this helper in the francis tests, but we don't want to
-    use our pytest fixture here.
 
-    """
+def test_helper_capture_events():
+    """Test that helper captures events."""
     helper = SentryTestHelper()
-    with helper.session_context() as helper_with_context:
-        helper_with_context.init()
-        assert helper_with_context.events == []
+    with helper.init() as sentry_client:
+        assert sentry_client.events == []
         try:
             raise Exception("intentional")
         except Exception as exc:
             sentry_sdk.capture_exception(exc)
 
-        (event,) = helper_with_context.events
-        print(json.dumps(event, indent=2))
+        (event,) = sentry_client.events
         assert event["exception"]["values"][0]["type"] == "Exception"
         assert event["exception"]["values"][0]["value"] == "intentional"
 
@@ -31,16 +37,114 @@ def test_capture_events():
         except Exception as exc:
             sentry_sdk.capture_exception(exc)
 
-        (
-            event1,
-            event2,
-        ) = helper_with_context.events
+        (event1, event2) = sentry_client.events
         assert event1["exception"]["values"][0]["type"] == "Exception"
         assert event1["exception"]["values"][0]["value"] == "intentional"
 
         assert event2["exception"]["values"][0]["type"] == "Exception"
         assert event2["exception"]["values"][0]["value"] == "another intentional"
 
-    with helper.session_context() as helper_with_context:
-        helper_with_context.init()
-        assert helper_with_context.events == []
+
+def test_helper_contexts():
+    """Test that new context clears events."""
+    helper = SentryTestHelper()
+    with helper.init() as sentry_client:
+        assert sentry_client.events == []
+        try:
+            raise Exception("intentional")
+        except Exception as exc:
+            sentry_sdk.capture_exception(exc)
+
+        (event,) = sentry_client.events
+        assert event["exception"]["values"][0]["type"] == "Exception"
+        assert event["exception"]["values"][0]["value"] == "intentional"
+
+    with helper.init() as sentry_client:
+        assert sentry_client.events == []
+
+
+def test_helper_reset():
+    """Test reset clears events."""
+    helper = SentryTestHelper()
+    with helper.init() as sentry_client:
+        assert sentry_client.events == []
+        try:
+            raise Exception("intentional")
+        except Exception as exc:
+            sentry_sdk.capture_exception(exc)
+
+        (event,) = sentry_client.events
+        assert event["exception"]["values"][0]["type"] == "Exception"
+        assert event["exception"]["values"][0]["value"] == "intentional"
+
+        sentry_client.reset()
+        assert sentry_client.events == []
+
+
+def test_helper_reuse():
+    helper = SentryTestHelper()
+
+    with sentry_sdk.Hub(None):
+        # Initialize sentry
+        sentry_sdk.init(
+            dsn="http://user:pwd@localhost:8000/0",
+            auto_enabling_integrations=False,
+            default_integrations=False,
+            integrations=[StdlibIntegration()],
+        )
+
+        # Initialize a sentry with no integrations and verify it has no integrations
+        kwargs = {
+            "auto_enabling_integrations": False,
+            "default_integrations": False,
+            "integrations": [],
+        }
+        with helper.init(**kwargs) as sentry_client:
+            assert sentry_client.events == []
+            try:
+                raise Exception("intentional")
+            except Exception as exc:
+                sentry_sdk.capture_exception(exc)
+
+            (event,) = sentry_client.events
+            assert event["sdk"]["integrations"] == []
+
+        # Try reusing the sentry client we created already and verify it has integrations
+        with helper.reuse() as reused_client:
+            assert reused_client.events == []
+            try:
+                raise Exception("intentional")
+            except Exception as exc:
+                sentry_sdk.capture_exception(exc)
+
+            (event,) = reused_client.events
+            assert event["sdk"]["integrations"] == ["stdlib"]
+
+
+def test_capture_events_with_scrubber():
+    """Test the helper with scrubber."""
+    scrubber = Scrubber(
+        rules=[
+            Rule(
+                path="exception.values.[].stacktrace.frames.[].vars",
+                keys=["username"],
+                scrub="scrub",
+            )
+        ]
+    )
+
+    helper = SentryTestHelper()
+    with helper.init(before_send=scrubber) as sentry_client:
+        assert sentry_client.events == []
+        try:
+            username = "foo"  # noqa
+            raise Exception("intentional")
+        except Exception as exc:
+            sentry_sdk.capture_exception(exc)
+
+        (event,) = sentry_client.events
+        error = event["exception"]["values"][0]
+        assert error["type"] == "Exception"
+        assert error["value"] == "intentional"
+        # Verify the username frame-local var is scrubbed
+        assert error["stacktrace"]["frames"][0]["vars"]["username"] == "[Scrubbed]"

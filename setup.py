@@ -59,5 +59,8 @@ setup(
         "Tracker": "https://github.com/willkg/francis/issues",
         "Source": "https://github.com/willkg/francis/",
     },
+    entry_points={
+        "pytest11": ["francis=francis.pytest_plugin"],
+    },
     options={"bdist_wheel": {"universal": "1"}},
 )

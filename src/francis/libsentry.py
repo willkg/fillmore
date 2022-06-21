@@ -6,7 +6,6 @@
 
 import logging
 from typing import Any, Callable, List
-from urllib.parse import urlparse
 
 import sentry_sdk
 from sentry_sdk.integrations.logging import ignore_logger
@@ -17,29 +16,10 @@ from francis import SCRUBBER_MODULE_NAME
 logger = logging.getLogger(__name__)
 
 
-def get_sentry_base_url(sentry_dsn: str) -> str:
-    """Given a sentry_dsn, returns the base url
-
-    This is helpful for tests that need the url to the fakesentry api.
-
-    :arg sentry_dsn: the sentry base url
-
-    """
-    if not sentry_dsn:
-        raise Exception("sentry_dsn required")
-
-    parsed_dsn = urlparse(sentry_dsn)
-    netloc = parsed_dsn.netloc
-    if "@" in netloc:
-        netloc = netloc[netloc.find("@") + 1 :]
-
-    return f"{parsed_dsn.scheme}://{netloc}/"
-
-
 def set_up_sentry(
+    sentry_dsn: str,
     release: str,
     host_id: str,
-    sentry_dsn: str,
     integrations: List[Any] = None,
     before_send: Callable = None,
     **kwargs: Any,
@@ -50,9 +30,9 @@ def set_up_sentry(
     (https://docs.sentry.io/platforms/python/configuration/integrations/default-integrations/),
     but not the auto-enabling ones.
 
+    :arg sentry_dsn: the Sentry DSN
     :arg release: the release name to tag events with
     :arg host_id: some str representing the host this service is running on
-    :arg sentry_dsn: the Sentry DSN
     :arg integrations: list of sentry integrations to set up;
     :arg before_send: set this to a callable to handle the Sentry before_send hook
 
