@@ -3,6 +3,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, Generator, List
+from unittest.mock import patch
 from urllib.parse import urlparse
 import uuid
 
@@ -35,6 +36,7 @@ def get_sentry_base_url(sentry_dsn: str) -> str:
 
 
 class _CaptureTransport(Transport):
+    """Sentry transport that captures emitted events."""
     def __init__(self) -> None:
         Transport.__init__(self)
         self._queue = None
@@ -52,13 +54,18 @@ class _CaptureTransport(Transport):
 
 
 class ReuseException(Exception):
-    pass
+    """Raised when there's no sentry_sdk client configured to reuse"""
 
 
 class SentryTestHelper:
     """Sentry test helper for initializing Sentry and capturing events.
 
-    This lets you access the events emitted via the ``.events`` attribute.
+    This helper lets you create new sentry_sdk clients or reuse existing
+    configured ones.
+
+    You can access emitted events with the ``.events`` attribute.
+
+    You can reset the event list with ``.reset()``.
 
     """
 
@@ -67,9 +74,11 @@ class SentryTestHelper:
 
     @property
     def events(self) -> List[Dict[Any, Any]]:
+        """Access the event list."""
         return self._transport.events
 
     def reset(self) -> None:
+        """Resets the event list."""
         self._transport.reset()
 
     @contextmanager
@@ -78,7 +87,15 @@ class SentryTestHelper:
     ) -> Generator["SentryTestHelper", None, None]:
         """Create a new sentry_sdk client with specified args
 
+        This creates a new sentry_sdk client with the specified args and
+        patches the client transport with one that captures Sentry events that
+        are being emitted. This lets you assert things against events.
+
         Arguments are the same as to sentry_sdk.Client.
+
+        .. seealso::
+
+           https://docs.sentry.io/platforms/python/configuration/options/
 
         """
         with sentry_sdk.Hub(None):
@@ -94,7 +111,9 @@ class SentryTestHelper:
     def reuse(self) -> Generator["SentryTestHelper", None, None]:
         """Re-use the current sentry_sdk client, but patch the transport
 
-        This lets you capture events that are being sent out.
+        This clears the breadcrumbs of the current sentry_sdk scope and patches
+        the client transport with one that captures Sentry events that are
+        being emitted. This lets you assert things against events.
 
         :raises ReuseException: if there's no sentry client initialized
 
@@ -103,13 +122,14 @@ class SentryTestHelper:
         if not client:
             raise ReuseException("there is no client to reuse")
 
-        old_transport = client.transport
-        try:
-            client.transport = self._transport
-            self._transport.reset()
+        self._transport.reset()
+
+        # Clear the breadcrumbs in the scope
+        sentry_sdk.Hub.current.scope.clear_breadcrumbs()
+
+        # Mock the transport with one that captures events
+        with patch.object(client, attribute="transport", new=self._transport):
             yield self
-        finally:
-            client.transport = old_transport
 
 
 class ConfigurationError(Exception):
