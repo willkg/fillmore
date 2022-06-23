@@ -8,6 +8,7 @@ include requirements-ci.txt
 include requirements-dev.txt
 include tox.ini
 include Makefile
+include .readthedocs.yaml
 
 recursive-include docs *.py
 recursive-include docs *.rst
