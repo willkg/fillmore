@@ -10,7 +10,7 @@ from typing import Any, Callable, List
 import sentry_sdk
 from sentry_sdk.integrations.logging import ignore_logger
 
-from francis import SCRUBBER_MODULE_NAME
+from fillmore import SCRUBBER_MODULE_NAME
 
 
 logger = logging.getLogger(__name__)

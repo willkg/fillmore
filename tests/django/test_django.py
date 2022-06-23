@@ -10,7 +10,7 @@ import pytest
 from sentry_sdk.integrations.django import DjangoIntegration
 from werkzeug.test import Client
 
-from francis.scrubber import (
+from fillmore.scrubber import (
     build_scrub_cookies,
     build_scrub_query_string,
     Scrubber,

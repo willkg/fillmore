@@ -1,5 +1,5 @@
 DEFAULT_GOAL := help
-PROJECT=francis
+PROJECT=fillmore
 
 .PHONY: help
 help:

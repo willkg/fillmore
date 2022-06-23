@@ -1,6 +1,6 @@
 build/
 dist/
-src/sentry_francis.egg-info/
+src/fillmore.egg-info/
 .tox
 __pycache__
 .python-version

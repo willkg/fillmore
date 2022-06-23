@@ -4,7 +4,7 @@
 
 import pytest
 
-from francis.test import SentryTestHelper
+from fillmore.test import SentryTestHelper
 
 
 @pytest.fixture

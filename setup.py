@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 
 def get_version():
-    fn = os.path.join("src", "francis", "__init__.py")
+    fn = os.path.join("src", "fillmore", "__init__.py")
     vsre = r"""^__version__ = ['"]([^'"]*)['"]"""
     version_file = open(fn).read()
     return re.search(vsre, version_file, re.M).group(1)
@@ -29,13 +29,13 @@ INSTALL_REQUIRES = [
 
 
 setup(
-    name="sentry-francis",
+    name="fillmore",
     version=get_version(),
     description="Sentry event scrubber and utilities library",
     long_description=(get_file("README.rst") + "\n\n" + get_file("HISTORY.rst")),
     author="Will Kahn-Greene",
     author_email="willkg@mozilla.com",
-    url="https://github.com/willkg/francis",
+    url="https://github.com/willkg/fillmore",
     install_requires=INSTALL_REQUIRES,
     packages=find_packages(where="src"),
     package_dir={"": "src"},
@@ -55,12 +55,12 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     project_urls={
-        "Documentation": "https://francis.readthedocs.io/",
-        "Tracker": "https://github.com/willkg/francis/issues",
-        "Source": "https://github.com/willkg/francis/",
+        "Documentation": "https://fillmore.readthedocs.io/",
+        "Tracker": "https://github.com/willkg/fillmore/issues",
+        "Source": "https://github.com/willkg/fillmore/",
     },
     entry_points={
-        "pytest11": ["francis=francis.pytest_plugin"],
+        "pytest11": ["fillmore=fillmore.pytest_plugin"],
     },
     options={"bdist_wheel": {"universal": "1"}},
 )

@@ -9,9 +9,9 @@ Scrubber
 Quickstart
 ==========
 
-1. Create a :py:class:`francis.scrubber.Scrubber` instance.
+1. Create a :py:class:`fillmore.scrubber.Scrubber` instance.
 
-2. Pass it a set of :py:class:`francis.scrubber.Rule` instances specifying
+2. Pass it a set of :py:class:`fillmore.scrubber.Rule` instances specifying
    things to scrub and how to scrub them.
 
 
@@ -25,7 +25,7 @@ Example:
 
    import sentry_sdk
 
-   from francis.scrubber import Scrubber, Rule, build_scrub_cookies
+   from fillmore.scrubber import Scrubber, Rule, build_scrub_cookies
 
    scrubber = Scrubber(
        rules=[
@@ -59,12 +59,12 @@ Things to know about scrubbing:
 2. Rules are executed in order.
 3. If the rule specifies data that doesn't exist in the Sentry event, then the
    rule won't be run.
-4. Anything scrubbed by Francis scrub functions has the value ``[Scrubbed]``.
+4. Anything scrubbed by Fillmore scrub functions has the value ``[Scrubbed]``.
    You can distinguish this from things scrubbed by sentry_sdk or Sentry server
    which use ``[Filtered]``.
 5. If traversing the Sentry event for the data to be scrubbed or the scrub rule
-   kicks up an error, Francis will log the exception to the
-   ``francis.scrubber`` logger.
+   kicks up an error, Fillmore will log the exception to the
+   ``fillmore.scrubber`` logger.
 
 
 How do I know what data to scrub?
@@ -107,14 +107,14 @@ things that happened before the Sentry event.
 
 To cut down on breadcrumbs, it's best to not include the relevant integrations.
 
-Francis lets you scrub breadcrumbs when Sentry events happen, but you might
+Fillmore lets you scrub breadcrumbs when Sentry events happen, but you might
 want to scrub breadcrumbs when they're being captured using a
 ``before_breadcrumbs`` function.
 
 https://docs.sentry.io/platforms/python/configuration/options/#before-breadcrumb
 
-Breadcrumbs tend to be free form, so Francis doesn't have a good scrubber for
-them--Francis scrubs the whole value or none of it. You'll either want to write
+Breadcrumbs tend to be free form, so Fillmore doesn't have a good scrubber for
+them--Fillmore scrubs the whole value or none of it. You'll either want to write
 your own scrub function that does what you need or you'll want to write a
 ``before_breadcrumbs`` function that fixes the breadcrumbs as they're captured.
 
@@ -199,8 +199,6 @@ Some things to know:
    bytes or a structured format depending on the integrations you have
    installed.
 
-   FIXME: Francis should handle this better.
-
 3. Request headers can include tokens, session information, and also
    information about your infrastructure.
 
@@ -221,7 +219,7 @@ when initializing Sentry.
 
 The ``before_send`` handler takes the Sentry event and a hint as arguments.
 
-The Francis Scrubber runs a series of Scrub Rules on the event producing an
+The Fillmore Scrubber runs a series of Scrub Rules on the event producing an
 event with specified data scrubbed.
 
 The sentry-sdk then sends this scrubbed event to the Sentry server.

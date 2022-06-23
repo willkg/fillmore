@@ -21,7 +21,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Francis'
+project = 'Fillmore'
 copyright = '2022, Will Kahn-Greene'
 author = 'Will Kahn-Greene'
 

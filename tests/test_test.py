@@ -6,8 +6,8 @@ import pytest
 import sentry_sdk
 from sentry_sdk.integrations.stdlib import StdlibIntegration
 
-from francis.scrubber import Scrubber, Rule
-from francis.test import SentryTestHelper, get_sentry_base_url
+from fillmore.scrubber import Scrubber, Rule
+from fillmore.test import SentryTestHelper, get_sentry_base_url
 
 
 @pytest.mark.parametrize(

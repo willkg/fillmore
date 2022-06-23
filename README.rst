@@ -1,21 +1,21 @@
-=======
-Francis
-=======
+========
+Fillmore
+========
 
 The Python sentry-sdk has a before_send hook that lets you scrub Sentry events
-before they're sent. Francis makes it easier to set up a before_send scrubber
+before they're sent. Fillmore makes it easier to set up a before_send scrubber
 and test it.
 
-:Code:          https://github.com/willkg/francis
-:Issues:        https://github.com/willkg/francis/issues
+:Code:          https://github.com/willkg/fillmore
+:Issues:        https://github.com/willkg/fillmore/issues
 :License:       MPL v2
-:Documentation: https://francis.readthedocs.io/
+:Documentation: https://fillmore.readthedocs.io/
 
 
 Goals
 =====
 
-Goals of Francis:
+Goals of Fillmore:
 
 1. make it easier to configure Sentry event scrubbing in a way that you can
    reason about
@@ -25,7 +25,7 @@ Goals of Francis:
    kicks up errors so you know when your error handling code is kicking up
    errors
 
-From that, Francis has the following features:
+From that, Fillmore has the following features:
 
 * lets you specify keys to scrub in a Sentry event
 * resilient to errors--if it fails, it will emit a signal that you can see and
@@ -39,7 +39,7 @@ Install
 
 Run::
 
-    $ pip install sentry-francis
+    $ pip install fillmore
 
 
 Quickstart
@@ -48,7 +48,7 @@ Quickstart
 Example::
 
     # Create a scrubber
-    from francis.scrubber import Scrubber, ScrubRule, build_scrub_query_string
+    from fillmore.scrubber import Scrubber, ScrubRule, build_scrub_query_string
 
     scrubber = Scrubber(
         scrub_rules=[
@@ -82,14 +82,14 @@ Now you've got a scrubber. However, how do you know it's scrubbing the right
 stuff? How will you know if something changes and it's no longer scrubbing the
 right stuff?
 
-Francis comes with a test harness you can use. For example, say you have a
+Fillmore comes with a test harness you can use. For example, say you have a
 app called "myapp"::
 
     # myapp/libsentry.py
     import sentry_sdk
 
     # Create a scrubber
-    from francis.scrubber import Scrubber, ScrubRule, build_scrub_query_string
+    from fillmore.scrubber import Scrubber, ScrubRule, build_scrub_query_string
 
     scrubber = Scrubber(
         scrub_rules=[
@@ -117,7 +117,7 @@ Then you can test it like this::
     # myapp/tests/test_libsentry.py
     from myapp.libsentry import scrubber
 
-    from francis.test import SentryTestHelper
+    from fillmore.test import SentryTestHelper
 
 
     def test_scrubber():
@@ -140,7 +140,7 @@ Then you can test it like this::
 
 This kicks up an exception in this context which sentry captures. If you need
 to test scrubbing for other contexts, you'll need to set that up differently.
-See Francis documentation for details and recipes.
+See Fillmore documentation for details and recipes.
 
 
 Why this? Why not other libraries?

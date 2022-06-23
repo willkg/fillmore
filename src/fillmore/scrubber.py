@@ -309,9 +309,9 @@ class Scrubber:
 
     https://docs.sentry.io/platforms/python/configuration/filtering/
 
-    You create a :py:class:`francis.scrubber.Scrubber` with a list of scrub
+    You create a :py:class:`fillmore.scrubber.Scrubber` with a list of scrub
     rules. When sentry_sdk is about to emit an event, the
-    :py:class:`francis.scrubber.Scrubber` applies the scrub rules to the event
+    :py:class:`fillmore.scrubber.Scrubber` applies the scrub rules to the event
     and returns the scrubbed event data.
 
     If a scrub rule kicks up an error, then the configured ``error_handler`` is
@@ -344,7 +344,7 @@ class Scrubber:
         the scrubs, it still emits something to Sentry.
 
         It will log errors, so we should look for those log statements. They'll
-        all be coming from the "francis.scrubber" logger.
+        all be coming from the "fillmore.scrubber" logger.
 
         """
 

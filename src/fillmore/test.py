@@ -14,7 +14,7 @@ import uuid
 import sentry_sdk
 from sentry_sdk.transport import Transport
 
-from francis.scrubber import Scrubber
+from fillmore.scrubber import Scrubber
 
 
 logger = logging.getLogger(__name__)

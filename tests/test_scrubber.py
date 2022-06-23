@@ -6,7 +6,7 @@ import logging
 
 import pytest
 
-from francis.scrubber import (
+from fillmore.scrubber import (
     build_scrub_cookies,
     build_scrub_query_string,
     _get_target_dicts,
@@ -308,7 +308,7 @@ class TestScrubber:
         # A message should be logged at the ERROR level
         assert caplog.record_tuples == [
             (
-                "francis.scrubber",
+                "fillmore.scrubber",
                 logging.ERROR,
                 "scrub fun error: bad_scrub, error: scruberror",
             )
@@ -353,7 +353,7 @@ class TestScrubber:
         # A message should be logged at the ERROR level
         assert caplog.record_tuples == [
             (
-                "francis.scrubber",
+                "fillmore.scrubber",
                 logging.ERROR,
                 "scrub fun error: bad_scrub, error: scruberror",
             )
@@ -389,12 +389,12 @@ class TestScrubber:
         # Multiple messages should be logged at the ERROR level
         assert caplog.record_tuples == [
             (
-                "francis.scrubber",
+                "fillmore.scrubber",
                 logging.ERROR,
                 "scrub fun error: bad_scrub, error: scruberror",
             ),
             (
-                "francis.scrubber",
+                "fillmore.scrubber",
                 logging.ERROR,
                 "error in error_handler bad_error_handler",
             ),
@@ -422,7 +422,7 @@ class TestScrubber:
         # Multiple messages should be logged at the ERROR level
         assert caplog.record_tuples == [
             (
-                "francis.scrubber",
+                "fillmore.scrubber",
                 logging.ERROR,
                 "scrubber error: error: path 'request.[]' doesn't match event structure",
             ),
@@ -465,7 +465,7 @@ class TestScrubber:
         # Multiple messages should be logged at the ERROR level
         assert caplog.record_tuples == [
             (
-                "francis.scrubber",
+                "fillmore.scrubber",
                 logging.ERROR,
                 "scrubber error: error: path 'request.[]' doesn't match event structure",
             ),
@@ -497,9 +497,9 @@ class TestScrubber:
         # Multiple messages should be logged at the ERROR level
         assert caplog.record_tuples == [
             (
-                "francis.scrubber",
+                "fillmore.scrubber",
                 logging.ERROR,
                 "scrubber error: error: path 'request.[]' doesn't match event structure",
             ),
-            ("francis.scrubber", 40, "error in error_handler bad_error_handler"),
+            ("fillmore.scrubber", 40, "error in error_handler bad_error_handler"),
         ]

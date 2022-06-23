@@ -12,10 +12,10 @@ Summary
 sentry_sdk is very flexible in the way it lets you set up Sentry.
 
 
-Setting up Sentry with Francis' helper
-======================================
+Setting up Sentry with Fillmore's helper
+========================================
 
-Francis has a helper for setting up Sentry that aims for "least surprising".
+Fillmore has a helper for setting up Sentry that aims for "least surprising".
 This sets the following:
 
 1. Sets ``release`` and ``host_id``.
@@ -33,8 +33,8 @@ You can use it like this:
 
 .. code-block:: python
 
-   from francis.libsentry import set_up_sentry
-   from francis.scrubber import Scrubber, Rule
+   from fillmore.libsentry import set_up_sentry
+   from fillmore.scrubber import Scrubber, Rule
 
    dsn = "some dsn"
    release = "some identifier for this release of this app"
@@ -69,8 +69,8 @@ For applications with sensitive information, we're doing something like this:
 
 .. code-block:: python
 
-   from francis.libsentry import set_up_sentry
-   from francis.scrubber import Scrubber, Rule
+   from fillmore.libsentry import set_up_sentry
+   from fillmore.scrubber import Scrubber, Rule
 
    dsn = "some dsn"
    release = "some identifier for this release of this app"
