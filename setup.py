@@ -29,9 +29,9 @@ INSTALL_REQUIRES = [
 
 
 setup(
-    name="francis",
+    name="sentry-francis",
     version=get_version(),
-    description="Sentry event scrubber library",
+    description="Sentry event scrubber and utilities library",
     long_description=(get_file("README.rst") + "\n\n" + get_file("HISTORY.rst")),
     author="Will Kahn-Greene",
     author_email="willkg@mozilla.com",

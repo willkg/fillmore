@@ -39,7 +39,7 @@ Install
 
 Run::
 
-    $ pip install francis
+    $ pip install sentry-francis
 
 
 Quickstart

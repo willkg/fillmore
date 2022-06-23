@@ -1,6 +1,6 @@
 build/
 dist/
-src/francis.egg-info
+src/sentry_francis.egg-info/
 .tox
 __pycache__
 .python-version
