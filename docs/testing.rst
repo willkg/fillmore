@@ -183,6 +183,8 @@ Francis includes a pytest fixture to make using the
            assert event["request"]["headers"]["Auth-Token"] == "[Scrubbed]"
 
 
+Test module API
+===============
 
 .. automodule:: francis.test
    :members:

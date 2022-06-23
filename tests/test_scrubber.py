@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import logging
+
 import pytest
 
 from francis.scrubber import (
@@ -217,69 +219,287 @@ def test_get_target_paths(event, path, expected):
     assert list(_get_target_dicts(event, path)) == expected
 
 
-@pytest.mark.parametrize(
-    "rules, event, expected",
-    [
-        ([], {}, {}),
-        (
-            [Rule(path="foo", keys=["bar"], scrub=scrub)],
-            {"foo": {"bar": "somevalue"}, "foo2": "othervalue"},
-            {"foo": {"bar": "[Scrubbed]"}, "foo2": "othervalue"},
-        ),
-        (
-            [Rule(path="foo", keys=["bar"], scrub="scrub")],
-            {"foo": {"bar": "somevalue"}, "foo2": "othervalue"},
-            {"foo": {"bar": "[Scrubbed]"}, "foo2": "othervalue"},
-        ),
-        (
-            [
+class TestScrubber:
+    @pytest.mark.parametrize(
+        "rules, event, expected",
+        [
+            ([], {}, {}),
+            (
+                [Rule(path="foo", keys=["bar"], scrub=scrub)],
+                {"foo": {"bar": "somevalue"}, "foo2": "othervalue"},
+                {"foo": {"bar": "[Scrubbed]"}, "foo2": "othervalue"},
+            ),
+            (
+                [Rule(path="foo", keys=["bar"], scrub="scrub")],
+                {"foo": {"bar": "somevalue"}, "foo2": "othervalue"},
+                {"foo": {"bar": "[Scrubbed]"}, "foo2": "othervalue"},
+            ),
+            (
+                [
+                    Rule(
+                        path="frames.[].vars",
+                        keys=["code_id", "state"],
+                        scrub=scrub,
+                    ),
+                ],
+                {
+                    "frames": [
+                        {"vars": {"foo": "bar"}},
+                        {"vars": {"index": 4, "code_id": "abcd", "state": "def"}},
+                    ],
+                    "function": "somefunc",
+                },
+                {
+                    "frames": [
+                        {"vars": {"foo": "bar"}},
+                        {
+                            "vars": {
+                                "index": 4,
+                                "code_id": "[Scrubbed]",
+                                "state": "[Scrubbed]",
+                            }
+                        },
+                    ],
+                    "function": "somefunc",
+                },
+            ),
+            # Handle case where the parent isn't a dict so the key doesn't exist. This let's
+            # us support a possible structure variation of request.data which could be a
+            # data structure or a string.
+            (
+                [Rule(path="request.data", keys=["bar"], scrub=scrub)],
+                {"request": {"data": "abcde"}},
+                {"request": {"data": "abcde"}},
+            ),
+            (
+                [Rule(path="request.data", keys=["bar"], scrub=scrub)],
+                {"request": {"data": {"bar": "abcde"}}},
+                {"request": {"data": {"bar": "[Scrubbed]"}}},
+            ),
+        ],
+    )
+    def test_scrubbing(self, rules, event, expected):
+        scrubber = Scrubber(rules=rules)
+        assert scrubber(event, {}) == expected
+
+    def test_scrub_error(self, caplog):
+        """Test scrub error when no error_handler is specified"""
+
+        def bad_scrub(value):
+            raise Exception("scruberror")
+
+        event = {"request": {"data": {"foo": "bar"}}}
+
+        scrubber = Scrubber(
+            rules=[
                 Rule(
-                    path="frames.[].vars",
-                    keys=["code_id", "state"],
-                    scrub=scrub,
-                ),
+                    path="request",
+                    keys=["data"],
+                    scrub=bad_scrub,
+                )
+            ]
+        )
+        scrubber(event, {})
+
+        # The event should have ERROR WHEN SCRUBBING instead of [Scrubbed] or
+        # something else
+        assert event == {"request": {"data": "ERROR WHEN SCRUBBING"}}
+
+        # A message should be logged at the ERROR level
+        assert caplog.record_tuples == [
+            (
+                "francis.scrubber",
+                logging.ERROR,
+                "scrub fun error: bad_scrub, error: scruberror",
+            )
+        ]
+
+    def test_scrub_error_error_handler(self, caplog):
+        """Test scrub error when error_handler is specified"""
+
+        class ErrorHandler:
+            def __init__(self):
+                self.errors = []
+
+            def __call__(self, msg):
+                self.errors.append(msg)
+
+        handler = ErrorHandler()
+
+        def bad_scrub(value):
+            raise Exception("scruberror")
+
+        event = {"request": {"data": {"foo": "bar"}}}
+
+        scrubber = Scrubber(
+            rules=[
+                Rule(
+                    path="request",
+                    keys=["data"],
+                    scrub=bad_scrub,
+                )
             ],
-            {
-                "frames": [
-                    {"vars": {"foo": "bar"}},
-                    {"vars": {"index": 4, "code_id": "abcd", "state": "def"}},
-                ],
-                "function": "somefunc",
-            },
-            {
-                "frames": [
-                    {"vars": {"foo": "bar"}},
-                    {
-                        "vars": {
-                            "index": 4,
-                            "code_id": "[Scrubbed]",
-                            "state": "[Scrubbed]",
-                        }
-                    },
-                ],
-                "function": "somefunc",
-            },
-        ),
-        # Handle case where the parent isn't a dict so the key doesn't exist. This let's
-        # us support a possible structure variation of request.data which could be a
-        # data structure or a string.
-        (
-            [Rule(path="request.data", keys=["bar"], scrub=scrub)],
-            {"request": {"data": "abcde"}},
-            {"request": {"data": "abcde"}},
-        ),
-        (
-            [Rule(path="request.data", keys=["bar"], scrub=scrub)],
-            {"request": {"data": {"bar": "abcde"}}},
-            {"request": {"data": {"bar": "[Scrubbed]"}}},
-        ),
-    ],
-)
-def test_Scrubber(rules, event, expected):
-    scrubber = Scrubber(rules=rules)
-    assert scrubber(event, {}) == expected
+            error_handler=handler,
+        )
+        scrubber(event, {})
 
+        # The event should have ERROR WHEN SCRUBBING instead of [Scrubbed] or
+        # something else
+        assert event == {"request": {"data": "ERROR WHEN SCRUBBING"}}
 
-# FIXME(willkg): test exception logging in scrub errors
+        # error_handler was called with message
+        assert handler.errors == ["scrub fun error: bad_scrub, error: scruberror"]
 
-# FIXME(willkg): test error_handler
+        # A message should be logged at the ERROR level
+        assert caplog.record_tuples == [
+            (
+                "francis.scrubber",
+                logging.ERROR,
+                "scrub fun error: bad_scrub, error: scruberror",
+            )
+        ]
+
+    def test_scrub_error_error_handler_error(self, caplog):
+        """Test scrub error when error_handler is specified and error_handler kicks up error"""
+
+        def bad_error_handler(msg):
+            raise Exception("handlererror")
+
+        def bad_scrub(value):
+            raise Exception("scruberror")
+
+        event = {"request": {"data": {"foo": "bar"}}}
+
+        scrubber = Scrubber(
+            rules=[
+                Rule(
+                    path="request",
+                    keys=["data"],
+                    scrub=bad_scrub,
+                )
+            ],
+            error_handler=bad_error_handler,
+        )
+        scrubber(event, {})
+
+        # The event should have ERROR WHEN SCRUBBING instead of [Scrubbed] or
+        # something else
+        assert event == {"request": {"data": "ERROR WHEN SCRUBBING"}}
+
+        # Multiple messages should be logged at the ERROR level
+        assert caplog.record_tuples == [
+            (
+                "francis.scrubber",
+                logging.ERROR,
+                "scrub fun error: bad_scrub, error: scruberror",
+            ),
+            (
+                "francis.scrubber",
+                logging.ERROR,
+                "error in error_handler bad_error_handler",
+            ),
+        ]
+
+    def test_path_error(self, caplog):
+        """Test path error when error_handler is not specified"""
+
+        event = {"request": {"data": {"foo": "bar"}}}
+
+        scrubber = Scrubber(
+            rules=[
+                Rule(
+                    path="request.[].data",
+                    keys=["foo"],
+                    scrub="scrub",
+                )
+            ],
+        )
+        scrubber(event, {})
+
+        # The event isn't altered by rules with bad paths
+        assert event == {"request": {"data": {"foo": "bar"}}}
+
+        # Multiple messages should be logged at the ERROR level
+        assert caplog.record_tuples == [
+            (
+                "francis.scrubber",
+                logging.ERROR,
+                "scrubber error: error: path 'request.[]' doesn't match event structure",
+            ),
+        ]
+
+    def test_path_error_error_handler(self, caplog):
+        """Test path error when error_handler is specified"""
+
+        class ErrorHandler:
+            def __init__(self):
+                self.errors = []
+
+            def __call__(self, msg):
+                self.errors.append(msg)
+
+        handler = ErrorHandler()
+
+        event = {"request": {"data": {"foo": "bar"}}}
+
+        scrubber = Scrubber(
+            rules=[
+                Rule(
+                    path="request.[].data",
+                    keys=["foo"],
+                    scrub="scrub",
+                )
+            ],
+            error_handler=handler,
+        )
+        scrubber(event, {})
+
+        # The event isn't altered by rules with bad paths
+        assert event == {"request": {"data": {"foo": "bar"}}}
+
+        # error_handler was called with message
+        assert handler.errors == [
+            "scrubber error: error: path 'request.[]' doesn't match event structure"
+        ]
+
+        # Multiple messages should be logged at the ERROR level
+        assert caplog.record_tuples == [
+            (
+                "francis.scrubber",
+                logging.ERROR,
+                "scrubber error: error: path 'request.[]' doesn't match event structure",
+            ),
+        ]
+
+    def test_path_error_error_handler_error(self, caplog):
+        """Test path error when error_handler is specified and errors"""
+
+        def bad_error_handler(msg):
+            raise Exception("handlererror")
+
+        event = {"request": {"data": {"foo": "bar"}}}
+
+        scrubber = Scrubber(
+            rules=[
+                Rule(
+                    path="request.[].data",
+                    keys=["foo"],
+                    scrub="scrub",
+                )
+            ],
+            error_handler=bad_error_handler,
+        )
+        scrubber(event, {})
+
+        # The event isn't altered by rules with bad paths
+        assert event == {"request": {"data": {"foo": "bar"}}}
+
+        # Multiple messages should be logged at the ERROR level
+        assert caplog.record_tuples == [
+            (
+                "francis.scrubber",
+                logging.ERROR,
+                "scrubber error: error: path 'request.[]' doesn't match event structure",
+            ),
+            ("francis.scrubber", 40, "error in error_handler bad_error_handler"),
+        ]

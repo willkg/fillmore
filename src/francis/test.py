@@ -37,6 +37,7 @@ def get_sentry_base_url(sentry_dsn: str) -> str:
 
 class _CaptureTransport(Transport):
     """Sentry transport that captures emitted events."""
+
     def __init__(self) -> None:
         Transport.__init__(self)
         self._queue = None

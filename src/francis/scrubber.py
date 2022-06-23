@@ -5,7 +5,7 @@
 import importlib
 import logging
 from urllib.parse import parse_qsl, urlencode
-from typing import Any, Callable, Generator, List, Union
+from typing import Any, Callable, Generator, List, Optional, Union
 
 import attrs
 
@@ -248,6 +248,10 @@ SCRUB_RULES_DEFAULT: List[Rule] = [
 ]
 
 
+class RulePathError(Exception):
+    """The rule path doesn't match the structure of the event"""
+
+
 def _get_target_dicts(event: dict, path: List[str]) -> Generator[dict, None, None]:
     """Given a path, yields the target dicts.
 
@@ -277,7 +281,16 @@ def _get_target_dicts(event: dict, path: List[str]) -> Generator[dict, None, Non
     """
     parent = event
     for i, part in enumerate(path):
-        if part == "[]" and isinstance(parent, (tuple, list)):
+        if part == "[]":
+            if not isinstance(parent, (tuple, list)):
+                # FIXME(willkg): raising an issue here means that this rule is
+                # misconfigured but we don't end up scrubbing anything, so it
+                # could result in leaked data and that seems bad
+                partial_path = ".".join(path[0 : i + 1])
+                raise RulePathError(
+                    f"path {partial_path!r} doesn't match event structure"
+                )
+
             for item in parent:
                 yield from _get_target_dicts(item, path[i + 1 :])
             return
@@ -287,11 +300,6 @@ def _get_target_dicts(event: dict, path: List[str]) -> Generator[dict, None, Non
 
     if isinstance(parent, dict):
         yield parent
-
-
-def log_exception(msg: str) -> None:
-    """Logs the current exception"""
-    logger.exception(msg)
 
 
 class Scrubber:
@@ -314,7 +322,7 @@ class Scrubber:
     def __init__(
         self,
         rules: List[Rule] = SCRUB_RULES_DEFAULT,
-        error_handler: Callable = log_exception,
+        error_handler: Optional[Callable] = None,
     ):
         """
         :arg rules: list of Rule instances
@@ -355,12 +363,15 @@ class Scrubber:
                         try:
                             filtered_val = rule.scrub(val)
                         except Exception as inner_exc:
-                            msg = f"scrub fun error: {rule.scrub}, error: {inner_exc}"
-                            log_exception(msg)
-                            try:
-                                self.error_handler(msg)
-                            except Exception:
-                                log_exception("error in error_handler")
+                            msg = f"scrub fun error: {rule.scrub.__name__}, error: {inner_exc}"
+                            logger.exception(msg)
+                            if self.error_handler is not None:
+                                try:
+                                    self.error_handler(msg)
+                                except Exception:
+                                    logger.exception(
+                                        f"error in error_handler {self.error_handler.__name__}"
+                                    )
 
                             filtered_val = "ERROR WHEN SCRUBBING"
 
@@ -368,10 +379,13 @@ class Scrubber:
 
             except Exception as outer_exc:
                 msg = f"scrubber error: error: {outer_exc}"
-                log_exception(msg)
-                try:
-                    self.error_handler(msg)
-                except Exception:
-                    log_exception("error in error_handler")
+                logger.exception(msg)
+                if self.error_handler is not None:
+                    try:
+                        self.error_handler(msg)
+                    except Exception:
+                        logger.exception(
+                            f"error in error_handler {self.error_handler.__name__}"
+                        )
 
         return event
