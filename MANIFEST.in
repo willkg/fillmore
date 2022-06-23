@@ -1,6 +1,15 @@
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include MANIFEST.in
 include README.rst
+include requirements-ci.txt
 include requirements-dev.txt
 include tox.ini
+include Makefile
+
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs Makefile
+recursive-include tests *.py

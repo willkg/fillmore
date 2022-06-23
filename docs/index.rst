@@ -12,6 +12,7 @@ Contents
    scrubber
    testing
    api
+   history
 
 
 
