@@ -38,7 +38,8 @@ def build_scrub_cookies(params: List[str]) -> Callable:
 
     For dictionary and list of tuples, this returns the scrubbed forms of those.
 
-    If the specified params is ALL_COOKIE_KEYS, then this will filter all cookie values.
+    If the specified params is ``ALL_COOKIE_KEYS``, then this will scrub all
+    cookie values.
 
     """
 
@@ -106,8 +107,8 @@ def build_scrub_query_string(params: List[str]) -> Callable:
 
     For dictionary and list of tuples, this returns the scrubbed forms of those.
 
-    If the params is ALL_QUERY_STRING_KEYS, then this will drop the query_string
-    altogether.
+    If the params is ``ALL_QUERY_STRING_KEYS``, then this will scrub all
+    query_string values.
 
     .. Note::
 
@@ -145,9 +146,8 @@ def build_scrub_query_string(params: List[str]) -> Callable:
         scrubbed_pairs = []
         for name, val in parse_qsl(value, keep_blank_values=True):
             if to_scrub is ALL_QUERY_STRING_KEYS or name in to_scrub:
-                if val:
-                    val = MASK_TEXT
-                    has_scrubbed_item = True
+                val = MASK_TEXT
+                has_scrubbed_item = True
             scrubbed_pairs.append((name, val))
 
         if not has_scrubbed_item:
@@ -159,6 +159,7 @@ def build_scrub_query_string(params: List[str]) -> Callable:
 
 
 def str2list(s: str) -> List[str]:
+    """Splits a string into parts using "." as the separator"""
     return s.split(".")
 
 
@@ -289,13 +290,24 @@ def _get_target_dicts(event: dict, path: List[str]) -> Generator[dict, None, Non
 
 
 def log_exception(msg: str) -> None:
+    """Logs the current exception"""
     logger.exception(msg)
 
 
 class Scrubber:
     """Scrubber pipeline for Sentry events
 
+    This is used as a ``before_send`` value as discussed here:
+
     https://docs.sentry.io/platforms/python/configuration/filtering/
+
+    You create a :py:class:`francis.scrubber.Scrubber` with a list of scrub
+    rules. When sentry_sdk is about to emit an event, the
+    :py:class:`francis.scrubber.Scrubber` applies the scrub rules to the event
+    and returns the scrubbed event data.
+
+    If a scrub rule kicks up an error, then the configured ``error_handler`` is
+    called.
 
     """
 

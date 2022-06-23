@@ -111,6 +111,11 @@ def test_scrub_cookies(cookies, keys, expected):
             ["code", "state"],
             "code=%5BScrubbed%5D&state=%5BScrubbed%5D",
         ),
+        (
+            "code=abc123&state",
+            ["code", "state"],
+            "code=%5BScrubbed%5D&state=%5BScrubbed%5D",
+        ),
         # If the query_string has nothing that needs scrubbing in it, then
         # it returns the query_string unaltered
         (
@@ -140,6 +145,11 @@ def test_scrub_cookies(cookies, keys, expected):
             ["code", "state"],
             {"code": "[Scrubbed]", "foo": "bar"},
         ),
+        (
+            {"foo": "bar", "state": ""},
+            ["code", "state"],
+            {"foo": "bar", "state": "[Scrubbed]"},
+        ),
         # Cover query_string as a list of tuples
         (
             [("foo", "bar")],
@@ -150,6 +160,11 @@ def test_scrub_cookies(cookies, keys, expected):
             [("code", "asdf"), ("foo", "bar")],
             ["code", "state"],
             [("code", "[Scrubbed]"), ("foo", "bar")],
+        ),
+        (
+            [("foo", "bar"), ("state", "")],
+            ["code", "state"],
+            [("foo", "bar"), ("state", "[Scrubbed]")],
         ),
     ],
 )
