@@ -6,7 +6,7 @@
 """Francis is a Python library for scrubbing Sentry events."""
 
 # x.y.z or x.y.z.dev0
-__version__ = "0.1.0.dev0"
+__version__ = "0.1.0"
 
 
 SCRUBBER_MODULE_NAME = __name__
