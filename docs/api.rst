@@ -13,14 +13,14 @@ Sentry helpers:
 
 
 fillmore.scrubber
-================
+=================
 
 .. automodule:: fillmore.scrubber
    :members:
 
 
 fillmore.libsentry
-=================
+==================
 
 .. automodule:: fillmore.libsentry
    :members:

@@ -325,7 +325,7 @@ class Scrubber:
         error_handler: Optional[Callable] = None,
     ):
         """
-        :arg rules: list of Rule instances
+        :param rules: list of Rule instances
         :param error_handler: function that takes a msg (str) and is called
             when either a scrub rule or getting the specified key by path in the
             Sentry event kicks up an error; this lets you emit some kind of signal

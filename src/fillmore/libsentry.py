@@ -30,11 +30,11 @@ def set_up_sentry(
     (https://docs.sentry.io/platforms/python/configuration/integrations/default-integrations/),
     but not the auto-enabling ones.
 
-    :arg sentry_dsn: the Sentry DSN
-    :arg release: the release name to tag events with
-    :arg host_id: some str representing the host this service is running on
-    :arg integrations: list of sentry integrations to set up;
-    :arg before_send: set this to a callable to handle the Sentry before_send hook
+    :param sentry_dsn: the Sentry DSN
+    :param release: the release name to tag events with
+    :param host_id: some str representing the host this service is running on
+    :param integrations: list of sentry integrations to set up;
+    :param before_send: set this to a callable to handle the Sentry before_send hook
 
         For scrubbing, do something like this::
 
@@ -42,7 +42,7 @@ def set_up_sentry(
 
         and then pass that as the ``before_send`` value.
 
-    :arg kwargs: any additional arguments to pass to sentry_sdk.init()
+    :param kwargs: any additional arguments to pass to sentry_sdk.init()
 
     """
     if not sentry_dsn:
