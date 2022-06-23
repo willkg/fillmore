@@ -166,7 +166,7 @@ Other libraries:
   and have no signal that something is horribly wrong. We need scrubbing code
   to be extremely resilient and default to emitting a signal that it's broken.
 
-* **Include testing infrastructure.**
+* **Don't include testing infrastructure.**
 
   I'm not scrubbing Sentry events for fun. I need to know that the scrubbing
   code is working correctly and that it continues to work as we upgrade
