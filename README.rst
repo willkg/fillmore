@@ -117,7 +117,7 @@ Then you can test it like this::
     # myapp/tests/test_libsentry.py
     from myapp.libsentry import scrubber
 
-    from francis.testing import SentryTestHelper
+    from francis.test import SentryTestHelper
 
 
     def test_scrubber():

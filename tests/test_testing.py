@@ -3,7 +3,7 @@ import sentry_sdk
 from sentry_sdk.integrations.stdlib import StdlibIntegration
 
 from francis.scrubber import Scrubber, Rule
-from francis.testing import SentryTestHelper, get_sentry_base_url
+from francis.test import SentryTestHelper, get_sentry_base_url
 
 
 @pytest.mark.parametrize(

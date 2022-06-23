@@ -1,6 +1,6 @@
 import pytest
 
-from francis.testing import SentryTestHelper
+from francis.test import SentryTestHelper
 
 
 @pytest.fixture

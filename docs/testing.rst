@@ -37,7 +37,7 @@ had ``SENTRY_DSN`` set to that dsn, then you could access it like this:
 
    import time
 
-   from francis.testing import get_sentry_base_url, SentryHelper
+   from francis.test import get_sentry_base_url, SentryHelper
    import requests
    # Use the werkzeug wsgi client because the Django test client fakes
    # everything
@@ -93,7 +93,7 @@ view that intentionally kicks up an exception and asserts scrubbing outcomes:
 
 .. code-block:: python
 
-   from francis.testing import SentryTestHelper
+   from francis.test import SentryTestHelper
    from sentry_sdk.integrations.django import DjangoIntegration
    # Use the werkzeug wsgi client because the Django test client fakes
    # everything
@@ -129,7 +129,7 @@ events it would send out so you can assert things against them:
 
 .. code-block:: python
 
-   from francis.testing import SentryTestHelper
+   from francis.test import SentryTestHelper
    from werkzeug.test import Client
 
    from myapp.wsgi import application
@@ -157,7 +157,7 @@ pytest fixture
 ==============
 
 Francis includes a pytest fixture to make using the
-:py:class:`francis.testing.SentryTestHelper` a little easier.
+:py:class:`francis.test.SentryTestHelper` a little easier.
 
 .. code-block:: python
 
@@ -184,5 +184,5 @@ Francis includes a pytest fixture to make using the
 
 
 
-.. automodule:: francis.testing
+.. automodule:: francis.test
    :members:
