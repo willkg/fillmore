@@ -5,12 +5,6 @@
 
 """Francis is a Python library for scrubbing Sentry events."""
 
-
-__author__ = "Will Kahn-Greene"
-__email__ = "willkg@mozilla.com"
-
-# yyyymmdd
-__releasedate__ = ""
 # x.y.z or x.y.z.dev0
 __version__ = "0.1.0.dev0"
 
