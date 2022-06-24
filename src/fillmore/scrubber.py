@@ -205,16 +205,18 @@ def thing2fun(thing: Union[Callable, str]) -> Callable:
 class Rule:
     """
 
-    ``path`` is a Python dotted path of key names with ``[]`` to denote
-    arrays to traverse pointing to a dict with values to scrub.
+    :param path: Python dotted path of key names with ``[]`` to denote
+        arrays to traverse pointing to a dict with values to scrub.
 
-    ``keys`` is a list of keys to scrub values of
+    :param keys: list of keys to scrub values of
 
-    ``scrub`` is a callable that takes a value and returns a scrubbed value.
-    For example::
+    :param scrub: is a callable that takes a value and returns a scrubbed value.
+        For example:
 
-        def hide_letter_a(value>: str) -> str:
-            return "".join([letter if letter != "a" else "*" for letter in value])
+        .. code-block::
+
+           def hide_letter_a(value>: str) -> str:
+               return "".join([letter if letter != "a" else "*" for letter in value])
 
 
     Rule example::
