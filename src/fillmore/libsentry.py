@@ -38,7 +38,7 @@ def set_up_sentry(
 
         For scrubbing, do something like this::
 
-            scrubber = Scrubbing(scrub_keys=SCRUB_RULES_DEFAULT + my_scrub_rules)
+            scrubber = Scrubber(rules=my_scrub_rules)
 
         and then pass that as the ``before_send`` value.
 
@@ -55,7 +55,7 @@ def set_up_sentry(
         server_name=host_id,
         # This prevents Sentry from trying to enable all the auto-enabling
         # integrations. We only want the ones we explicitly set up. This
-        # provents sentry from loading the Falcon integration (which fails) in a Django
+        # prevents sentry from loading the Falcon integration (which fails) in a Django
         # context.
         auto_enabling_integrations=False,
         integrations=integrations or [],
