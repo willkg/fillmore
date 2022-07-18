@@ -38,7 +38,7 @@ def set_up_sentry(
 
         For scrubbing, do something like this::
 
-            scrubber = Scrubber(rules=my_scrub_rules)
+            scrubber = Scrubber(rules=SCRUB_RULES_DEFAULT + my_scrub_rules)
 
         and then pass that as the ``before_send`` value.
 
