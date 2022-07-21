@@ -25,7 +25,7 @@ def get_sentry_base_url(sentry_dsn: str) -> str:
 
     This is helpful for tests that need the url to the fakesentry api.
 
-    :arg sentry_dsn: the sentry base url
+    :param sentry_dsn: the sentry base url
 
     """
     if not sentry_dsn:
