@@ -37,7 +37,7 @@ had ``SENTRY_DSN`` set to that dsn, then you could access it like this:
 
    import time
 
-   from fillmore.test import get_sentry_base_url, SentryHelper
+   from fillmore.test import get_sentry_base_url, SentryTestHelper
    import requests
    # Use the werkzeug wsgi client because the Django test client fakes
    # everything
@@ -48,7 +48,8 @@ had ``SENTRY_DSN`` set to that dsn, then you could access it like this:
    from myapp.wsgi import application
 
 
-   def test_sentry(sentry_helper):
+   def test_sentry():
+       sentry_helper = SentryTestHelper()
        client = Client(application)
        kent_api = get_sentry_base_url(settings.SENTRY_DSN)
 
@@ -86,14 +87,14 @@ had ``SENTRY_DSN`` set to that dsn, then you could access it like this:
 Other tests
 ===========
 
-Fillmore comes with some testing helpers including pytest fixtures.
+Fillmore comes with some testing helpers including a pytest fixture.
 
-For example, here's a pytest test that uses ``sentry_helper`` to test a Django
-view that intentionally kicks up an exception and asserts scrubbing outcomes:
+For example, here's a pytest test that uses ``sentry_helper`` pytest fixture to
+test a Django view that intentionally kicks up an exception and asserts
+scrubbing outcomes:
 
 .. code-block:: python
 
-   from fillmore.test import SentryTestHelper
    from sentry_sdk.integrations.django import DjangoIntegration
    # Use the werkzeug wsgi client because the Django test client fakes
    # everything
@@ -102,8 +103,7 @@ view that intentionally kicks up an exception and asserts scrubbing outcomes:
    from myapp.wsgi import application
 
 
-   def test_sentry():
-       sentry_helper = SentryTestHelper()
+   def test_sentry(sentry_helper):
        client = Client(application)
        kwargs = {
            "auto_enabling_integrations": False,
@@ -129,14 +129,12 @@ events it would send out so you can assert things against them:
 
 .. code-block:: python
 
-   from fillmore.test import SentryTestHelper
    from werkzeug.test import Client
 
    from myapp.wsgi import application
 
 
-   def test_sentry():
-       sentry_helper = SentryTestHelper()
+   def test_sentry(sentry_helper):
        client = Client(application)
 
        # reuse uses an existing configured Sentry client, but mocks the
