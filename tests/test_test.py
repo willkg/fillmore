@@ -49,6 +49,37 @@ def test_helper_capture_events():
         assert event2["exception"]["values"][0]["value"] == "another intentional"
 
 
+def test_helper_capture_exceptions_without_stack():
+    scrubber = Scrubber(
+        rules=[
+            Rule(
+                path="exception.values.[].stacktrace.frames.[].vars",
+                keys=["username"],
+                scrub="scrub",
+            )
+        ]
+    )
+
+    helper = SentryTestHelper()
+    with helper.init(before_send=scrubber) as sentry_client:
+        assert sentry_client.events == []
+
+        sentry_sdk.capture_exception(Exception("intentional"))
+
+        (event,) = sentry_client.events
+        assert event["exception"]["values"][0]["type"] == "Exception"
+        assert event["exception"]["values"][0]["value"] == "intentional"
+
+        sentry_sdk.capture_exception(Exception("another intentional"))
+
+        (event1, event2) = sentry_client.events
+        assert event1["exception"]["values"][0]["type"] == "Exception"
+        assert event1["exception"]["values"][0]["value"] == "intentional"
+
+        assert event2["exception"]["values"][0]["type"] == "Exception"
+        assert event2["exception"]["values"][0]["value"] == "another intentional"
+
+
 def test_helper_contexts():
     """Test that new context clears events."""
     helper = SentryTestHelper()
