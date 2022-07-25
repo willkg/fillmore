@@ -219,6 +219,21 @@ def test_get_target_paths(event, path, expected):
     assert list(_get_target_dicts(event, path)) == expected
 
 
+@pytest.mark.parametrize(
+    "event, path, expected",
+    [
+        # Test case where path points to item not in structure
+        (
+            {"exception": {"values": [{"foo": "bar"}]}},
+            ["exception", "values", "[]", "stacktrace", "frames", "[]", "values"],
+            [],
+        )
+    ],
+)
+def test_get_target_paths_missing(event, path, expected):
+    assert list(_get_target_dicts(event, path)) == expected
+
+
 class TestScrubber:
     @pytest.mark.parametrize(
         "rules, event, expected",

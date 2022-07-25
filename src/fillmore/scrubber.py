@@ -10,7 +10,7 @@ from typing import Any, Callable, Generator, List, Optional, Union
 import attrs
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 MASK_TEXT: str = "[Scrubbed]"
@@ -300,6 +300,10 @@ def _get_target_dicts(event: dict, path: List[str]) -> Generator[dict, None, Non
         elif part in parent:
             parent = parent[part]
 
+        else:
+            # This path doesn't point to a thing in the structure
+            return
+
     if isinstance(parent, dict):
         yield parent
 
@@ -366,12 +370,12 @@ class Scrubber:
                             filtered_val = rule.scrub(val)
                         except Exception as inner_exc:
                             msg = f"scrub fun error: {rule.scrub.__name__}, error: {inner_exc}"
-                            logger.exception(msg)
+                            LOGGER.exception(msg)
                             if self.error_handler is not None:
                                 try:
                                     self.error_handler(msg)
                                 except Exception:
-                                    logger.exception(
+                                    LOGGER.exception(
                                         f"error in error_handler {self.error_handler.__name__}"
                                     )
 
@@ -381,12 +385,12 @@ class Scrubber:
 
             except Exception as outer_exc:
                 msg = f"scrubber error: error: {outer_exc}"
-                logger.exception(msg)
+                LOGGER.exception(msg)
                 if self.error_handler is not None:
                     try:
                         self.error_handler(msg)
                     except Exception:
-                        logger.exception(
+                        LOGGER.exception(
                             f"error in error_handler {self.error_handler.__name__}"
                         )
 

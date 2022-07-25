@@ -17,7 +17,7 @@ from sentry_sdk.transport import Transport
 from fillmore.scrubber import Scrubber
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def get_sentry_base_url(sentry_dsn: str) -> str:
@@ -27,9 +27,16 @@ def get_sentry_base_url(sentry_dsn: str) -> str:
 
     :param sentry_dsn: the sentry base url
 
+    :raises TypeError: when sentry_dsn is not a string
+
+    :raises ValueError: when sentry_dsn is empty
+
     """
+    if not isinstance(sentry_dsn, str):
+        raise TypeError("sentry_dsn must be a str")
+
     if not sentry_dsn:
-        raise Exception("sentry_dsn required")
+        raise ValueError("sentry_dsn is required")
 
     parsed_dsn = urlparse(sentry_dsn)
     netloc = parsed_dsn.netloc
@@ -181,6 +188,6 @@ class SaveEvents:
             data = json.dumps(event)
             path.write_text(data)
         except Exception as exc:
-            logger.exception(f"error in SaveEvents.__call__: {exc}")
+            LOGGER.exception(f"error in SaveEvents.__call__: {exc}")
 
         return self.wrapped_scrubber(event=event, hint=hint)
