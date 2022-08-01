@@ -35,5 +35,4 @@ docs:  ## Runs cog and builds Sphinx docs
 
 .PHONY: checkrot
 checkrot:  ## Check package rot for dev dependencies
-	piprot -o requirements-dev.txt
-	piprot -o requirements-ci.txt
+	pip list -o
