@@ -47,55 +47,12 @@ Quickstart
 
 Example::
 
-    # myapp/app.py
-    import logging
-    import logging.config
-
-    from fillmore.libsentry import set_up_sentry
-    from fillmore.scrubber import Scrubber, Rule, build_scrub_query_string
-
-
-    # Set up logging to capture fillmore error messages
-    logging.getLogger("fillmore").setLevel(logging.ERROR)
-
-    # Create a scrubber
-    scrubber = Scrubber(
-        rules=[
-            Rule(
-                path="request.headers",
-                keys=["Auth-Token", "Cookie"],
-                scrub="scrub",
-            ),
-            Rule(
-                path="request",
-                keys=["query_string"],
-                scrub=build_scrub_query_string(params=["code", "state"]),
-            ),
-            Rule(
-                path="exception.values.[].stacktrace.frames.[].vars",
-                keys=["username", "password"],
-                scrub="scrub",
-            ),
-        ]
-    )
-
-    # Set up Sentry with the scrubber and the default integrations which
-    # includes the LoggingIntegration which will capture messages with level
-    # logging.ERROR.
-    set_up_sentry(
-        sentry_dsn="http://user@example.com/1",
-        host_id="some host id",
-        release="some release name",
-        before_send=scrubber,
-    )
-
-
-    def kick_up_exception():
-        username = "James"  # noqa
-        try:
-            raise Exception("internal exception")
-        except Exception:
-            logging.getLogger(__name__).exception("kick_up_exception exception")
+    [[[cog
+    import cog
+    with open("examples/myapp/myapp/app.py", "r") as fp:
+        cog.outl(fp.read().strip())
+    ]]]
+    [[[end]]]
 
 Now you have a scrubber and you've set up the Sentry client to use it. How do
 you know it's scrubbing the right stuff? How will you know if something changes
@@ -103,29 +60,12 @@ and it's no longer scrubbing the right stuff?
 
 You can test it like this::
 
-    # myapp/test_app.py
-    import unittest
-
-    from fillmore.test import SentryTestHelper
-
-    from myapp.app import kick_up_exception
-
-
-    class TestApp(unittest.TestCase):
-        def test_scrubber(self):
-            # Reuse the existing Sentry configuration and set up the helper
-            # to capture Sentry events
-            sentry_test_helper = SentryTestHelper()
-            with sentry_test_helper.reuse() as sentry_client:
-                kick_up_exception()
-
-                (event,) = sentry_client.events
-                error = event["exception"]["values"][0]
-                self.assertEqual(error["type"], "Exception")
-                self.assertEqual(error["value"], "internal exception")
-                self.assertEqual(
-                    error["stacktrace"]["frames"][0]["vars"]["username"], "[Scrubbed]"
-                )
+    [[[cog
+    import cog
+    with open("examples/myapp/myapp/test_app.py", "r") as fp:
+        cog.outl(fp.read().strip())
+    ]]]
+    [[[end]]]
 
 This creates a Sentry client specific to this test and kicks up an exception in
 the test and captures it with Sentry.
