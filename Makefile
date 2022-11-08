@@ -4,6 +4,7 @@ PROJECT=fillmore
 .PHONY: help
 help:
 	@echo "Available rules:"
+	@echo ""
 	@fgrep -h "##" Makefile | fgrep -v fgrep | sed 's/\(.*\):.*##/\1:  /'
 
 .PHONY: test
@@ -12,12 +13,13 @@ test:  ## Run tests
 
 .PHONY: typecheck
 typecheck:  ## Run typechecking
-	mypy src/${PROJECT}/
+	tox -e py38-typecheck
 
 .PHONY: lint
 lint:  ## Lint and reformat files
-	black --target-version=py38 --line-length=88 setup.py src tests docs examples
-	flake8 setup.py src tests docs examples
+	black --check --target-version=py38 --line-length=88 setup.py src tests docs examples
+	tox -e py38-black
+	tox -e py38-flake8
 
 .PHONY: clean
 clean:  ## Clean build artifacts
