@@ -5,7 +5,7 @@
 """Utility functions for setting up Sentry."""
 
 import logging
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Optional
 
 import sentry_sdk
 from sentry_sdk.integrations.logging import ignore_logger
@@ -20,8 +20,8 @@ def set_up_sentry(
     sentry_dsn: str,
     release: str,
     host_id: str,
-    integrations: List[Any] = None,
-    before_send: Callable = None,
+    integrations: Optional[List[Any]] = None,
+    before_send: Optional[Callable] = None,
     **kwargs: Any,
 ) -> None:
     """Set up Sentry
