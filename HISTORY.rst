@@ -1,6 +1,15 @@
 History
 =======
 
+1.0.0 (November 8th, 2022)
+--------------------------
+
+* Add support for Python 3.11 (#18)
+
+This feels stable and I'm using it in multiple production real-world projects,
+so releasing a 1.0.0.
+
+
 0.1.2 (August 1st, 2022)
 ------------------------
 
