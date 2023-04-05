@@ -3,11 +3,12 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 from contextlib import contextmanager
+from itertools import zip_longest
 import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, Generator, List
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 from urllib.parse import urlparse
 import uuid
 
@@ -103,7 +104,7 @@ class SentryTestHelper:
         patches the client transport with one that captures Sentry events that
         are being emitted. This lets you assert things against events.
 
-        Arguments are the same as to sentry_sdk.Client.
+        Arguments are the same as to ``sentry_sdk.Client``.
 
         .. seealso::
 
@@ -191,3 +192,104 @@ class SaveEvents:
             LOGGER.exception(f"error in SaveEvents.__call__: {exc}")
 
         return self.wrapped_scrubber(event=event, hint=hint)
+
+
+def diff_event(
+    a: Dict[str, Any], b: Dict[str, Any], path: str = ""
+) -> List[Dict[str, Any]]:
+    """Compares two Sentry event structures.
+
+    This supports ``unittest.mock.ANY`` which will always match.
+
+    Example::
+
+        # Get an event from the SentryTestHelper.events list and diff it
+        # against the expected event
+        differences = diff_event(event, expected)
+        assert differences == []
+
+
+    :arg a: first structure
+    :arg b: second structure
+
+    :returns: list of differences each as a dict with "msg", "a", "b", "path"
+        keys
+
+        For example::
+
+            {
+                "msg": "different types: a:<class 'int'> b:<class 'str'>",
+                "path": "some.path",
+                "a": 5,
+                "b": "five",
+            }
+
+    """
+    if a is ANY or b is ANY:
+        return []
+
+    if type(a) != type(b):
+        return [
+            {
+                "msg": f"different types a:{type(a)} b:{type(b)}",
+                "path": path,
+                "a": a,
+                "b": b,
+            }
+        ]
+
+    if isinstance(a, (list, tuple)):
+        i = 0
+        differences = []
+        for item_a, item_b in zip_longest(a, b, fillvalue=None):
+            differences.extend(diff_event(item_a, item_b, f"{path}.[{i}]"))
+            i += 1
+        return differences
+
+    if isinstance(a, dict):
+        keyset_a = set(a.keys())
+        keyset_b = set(b.keys())
+        differences = []
+
+        # Iterate over common keys of both sets
+        for key in sorted(keyset_a & keyset_b):
+            differences.extend(diff_event(a[key], b[key], f"{path}.{key}"))
+
+        # Print out missing keys
+        delta_keys = keyset_a - keyset_b
+        if delta_keys:
+            for key in sorted(delta_keys):
+                differences.append(
+                    {
+                        "msg": f"{key} in a, not in b",
+                        "path": path,
+                        "a": a,
+                        "b": b,
+                    }
+                )
+
+        delta_keys = keyset_b - keyset_a
+        if delta_keys:
+            for key in sorted(delta_keys):
+                differences.append(
+                    {
+                        "msg": f"{key} in b, not in a",
+                        "path": path,
+                        "a": a,
+                        "b": b,
+                    }
+                )
+        return differences
+
+    if isinstance(a, (int, float, str)):
+        if a != b:
+            return [
+                {
+                    "msg": f"{a!r} != {b!r}",
+                    "path": path,
+                    "a": a,
+                    "b": b,
+                }
+            ]
+
+    return []
