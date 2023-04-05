@@ -6,7 +6,7 @@ include MANIFEST.in
 include README.rst
 include requirements-ci.txt
 include requirements-dev.txt
-include tox.ini
+include pyproject.toml
 include Makefile
 include .readthedocs.yaml
 

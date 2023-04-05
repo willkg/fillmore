@@ -192,8 +192,8 @@ def thing2fun(thing: Union[Callable, str]) -> Callable:
             module = importlib.import_module(module_name)
             try:
                 fn = getattr(module, class_name)
-            except AttributeError:
-                raise RuleError(f"{thing} does not exist")
+            except AttributeError as exc:
+                raise RuleError(f"{thing} does not exist") from exc
 
             if callable(fn):
                 return fn
