@@ -27,10 +27,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Update pip and install tox requirements
+      - name: Update pip and install ci requirements
         run: |
           python -m pip install --upgrade pip
-          python -m pip install tox tox-gh-actions
+          python -m pip install -r requirements-ci.txt
 
       - name: Run Tox
         run: tox
