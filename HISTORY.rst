@@ -1,6 +1,15 @@
 History
 =======
 
+1.1.0 (April 5th, 2023)
+-----------------------
+
+* Switch from flake8 to ruff (#24)
+
+* Add ``fillmore.test.diff_event`` utilify function for comparing a Sentry
+  event with an expected structure accounting for ``unittest.mock.ANY``. (#23)
+
+
 1.0.0 (November 8th, 2022)
 --------------------------
 
