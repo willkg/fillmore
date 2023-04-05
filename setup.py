@@ -33,6 +33,7 @@ setup(
     version=get_version(),
     description="Sentry event scrubber and utilities library",
     long_description=(get_file("README.rst") + "\n\n" + get_file("HISTORY.rst")),
+    long_description_content_type="text/x-rest",
     author="Will Kahn-Greene",
     author_email="willkg@mozilla.com",
     url="https://github.com/willkg/fillmore",
