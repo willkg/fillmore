@@ -38,6 +38,7 @@ setup(
     author_email="willkg@mozilla.com",
     url="https://github.com/willkg/fillmore",
     install_requires=INSTALL_REQUIRES,
+    python_requires=">=3.8",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     include_package_data=True,
