@@ -33,8 +33,8 @@ filterwarnings = [
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{38,39,310}-django{none,32,40,41},
-    py{311,312}-django{none,41},
+envlist = py{38,39,310}-django{none,32,40,41,42},
+    py{311,312}-django{none,41,42},
     py38-lint,
     py38-typecheck,
     py38-examples
@@ -52,6 +52,7 @@ deps =
     django32: Django>=3.2,<4.0
     django40: Django>=4.0,<4.1
     django41: Django>=4.1,<4.2
+    django42: Django>=4.2,<5.0
     -rrequirements-dev.txt
 commands =
     pytest tests/ {posargs}
