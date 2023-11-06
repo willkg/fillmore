@@ -1,6 +1,14 @@
 History
 =======
 
+1.2.0 (November 6th, 2023)
+--------------------------
+
+* Add support for Python 3.12 (#32)
+
+* Add support for Django 4.2 (#33)
+
+
 1.1.0 (April 5th, 2023)
 -----------------------
 
