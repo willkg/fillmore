@@ -15,9 +15,12 @@ test:  ## Run tests
 typecheck:  ## Run typechecking
 	tox -e py38-typecheck
 
+.PHONY: format
+format:  ## Format files
+	tox exec -e py38-lint -- ruff format
+
 .PHONY: lint
-lint:  ## Lint and reformat files
-	black src setup.py tests docs examples
+lint:  ## Lint files
 	tox -e py38-lint
 
 .PHONY: clean
