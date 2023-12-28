@@ -3,14 +3,13 @@
 
 -r requirements-ci.txt
 
-black==23.9.1
 build==1.0.3
 cogapp==3.3.0
-mypy==1.5.1
-pytest==7.4.2
-ruff==0.0.292
+mypy==1.8.0
+pytest==7.4.3
+ruff==0.1.9
 twine==4.0.2
-Werkzeug==2.2.3
+Werkzeug==3.0.1
 
 tomli>=2.0.1; python_version < '3.11'
 
