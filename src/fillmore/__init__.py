@@ -5,8 +5,15 @@
 
 """Fillmore is a Python library for scrubbing Sentry events."""
 
-# x.y.z or x.y.z.dev0
-__version__ = "1.2.0"
+from importlib.metadata import (
+    version as importlib_version,
+    PackageNotFoundError,
+)
+
+try:
+    __version__ = importlib_version("fillmore")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 
 SCRUBBER_MODULE_NAME = __name__

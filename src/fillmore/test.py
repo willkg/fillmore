@@ -13,6 +13,14 @@ from urllib.parse import urlparse
 import uuid
 
 import sentry_sdk
+
+try:
+    from sentry_sdk._types import Event
+except ImportError:
+    # NOTE(willkg): sentry only defines Event in a type checking context, but
+    # it's annoying to do types in comments, so we define Event type as
+    # something less specific when not type checking
+    Event = Dict[Any, Any]  # type: ignore
 from sentry_sdk.transport import Transport
 
 from fillmore.scrubber import Scrubber
@@ -54,9 +62,9 @@ class _CaptureTransport(Transport):
         Transport.__init__(self)
         self._queue = None
 
-        self.events: List[Dict[Any, Any]] = []
+        self.events: List[Event] = []
 
-    def capture_event(self, event: Dict[Any, Any]) -> None:
+    def capture_event(self, event: Event) -> None:
         self.events.append(event)
 
     def capture_envelope(self, envelope: Any) -> None:
@@ -86,7 +94,7 @@ class SentryTestHelper:
         self._transport = _CaptureTransport()
 
     @property
-    def events(self) -> List[Dict[Any, Any]]:
+    def events(self) -> List[Event]:
         """Access the event list."""
         return self._transport.events
 
