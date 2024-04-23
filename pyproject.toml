@@ -1,3 +1,56 @@
+[project]
+name = "fillmore"
+description = "Sentry event scrubber and utilities library"
+version = "1.2.0"
+readme = "README.rst"
+keywords = ["sentry", "filter", "scrubber"]
+authors = [{name = "Will Kahn-Greene"}]
+license = {text = "MPLv2"}
+requires-python = ">=3.8"
+dependencies = [
+    "attrs>=21.2.0",
+    "sentry-sdk>=1.5.0",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+urls.Homepage = "https://github.com/willkg/fillmore"
+urls.Documentation = "https://fillmore.readthedocs.io/"
+urls.Source = "https://github.com/willkg/fillmore/"
+urls.Issues = "https://github.com/willkg/fillmore/issues"
+
+[project.entry-points.pytest11]
+fillmore = "fillmore.pytest_plugin"
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "cogapp",
+    "mypy",
+    "pytest",
+    "ruff",
+    "Sphinx; python_version > '3.8'",
+    "sphinx_rtd_theme",
+    "tomli; python_version < '3.11'",
+    "tox",
+    "tox-gh-actions",
+    "twine",
+    "Werkzeug",
+]
+
+
+
 [tool.ruff]
 # Enable pycodestyle (E), pyflakes (F), and bugbear (B) rules
 select = ["E", "F", "B"]
@@ -28,6 +81,7 @@ filterwarnings = [
 [tool.tox]
 legacy_tox_ini = """
 [tox]
+isolated_build = True
 envlist = py{38,39,310}-django{none,32,40,41,42},
     py{311,312}-django{none,41,42},
     py38-lint,
@@ -48,16 +102,15 @@ deps =
     django40: Django>=4.0,<4.1
     django41: Django>=4.1,<4.2
     django42: Django>=4.2,<5.0
-    -rrequirements-dev.txt
-commands =
-    pytest tests/ {posargs}
+extras = dev
+commands = pytest tests/ {posargs}
 
 [testenv:py38-lint]
 basepython = python3.8
 changedir = {toxinidir}
 commands =
-    ruff format --check src setup.py tests docs examples
-    ruff check src setup.py tests docs examples
+    ruff format --check src tests docs examples
+    ruff check src tests docs examples
 
 [testenv:py38-examples]
 basepython = python3.8

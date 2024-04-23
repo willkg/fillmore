@@ -120,9 +120,9 @@ def test_scrub_request_cookies(sentry_helper, client):
     kwargs["before_send"] = scrubber
     with sentry_helper.init(**kwargs) as sentry_client:
         # Add a bunch of cookies
-        client.set_cookie(server_name="localhost", key="csrftoken", value="abcde")
-        client.set_cookie(server_name="localhost", key="sessionid", value="someid")
-        client.set_cookie(server_name="localhost", key="foo", value="bar")
+        client.set_cookie(key="csrftoken", value="abcde", domain="localhost")
+        client.set_cookie(key="sessionid", value="someid", domain="localhost")
+        client.set_cookie(key="foo", value="bar", domain="localhost")
 
         resp = client.get("/broken")
         assert resp.status_code == 500
