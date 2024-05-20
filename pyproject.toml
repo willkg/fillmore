@@ -84,8 +84,9 @@ filterwarnings = [
 legacy_tox_ini = """
 [tox]
 isolated_build = True
-envlist = py{38,39,310}-django{none,42},
-    py{311,312}-django{none,42},
+envlist = py{38,39}-django{none,42},
+    py310-django{none,42,50},
+    py{311,312}-django{none,42,50},
     py38-lint,
     py38-typecheck,
     py38-examples
@@ -101,6 +102,7 @@ python =
 [testenv]
 deps =
     django42: Django>=4.2,<5.0
+    django50: Django>=5.0,<5.1
 extras = dev
 commands = pytest tests/ {posargs}
 
