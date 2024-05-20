@@ -14,13 +14,7 @@ import uuid
 
 import sentry_sdk
 
-try:
-    from sentry_sdk._types import Event
-except ImportError:
-    # NOTE(willkg): sentry only defines Event in a type checking context, but
-    # it's annoying to do types in comments, so we define Event type as
-    # something less specific when not type checking
-    Event = Dict[Any, Any]  # type: ignore
+from sentry_sdk.envelope import Envelope
 from sentry_sdk.transport import Transport
 
 from fillmore.scrubber import Scrubber
@@ -62,16 +56,25 @@ class _CaptureTransport(Transport):
         Transport.__init__(self)
         self._queue = None
 
-        self.events: List[Event] = []
+        self.envelopes: List[Envelope] = []
 
-    def capture_event(self, event: Event) -> None:
-        self.events.append(event)
-
-    def capture_envelope(self, envelope: Any) -> None:
+    def capture_event(self, event: Any) -> None:
         pass
 
+    def capture_envelope(self, envelope: Envelope) -> None:
+        self.envelopes.append(envelope)
+
+    def envelope_payloads(self) -> List[dict]:
+        """Returns a list of payloads from captured envelopes"""
+        payloads = []
+        for envelope in self.envelopes:
+            payloads.extend(
+                [item.payload.json for item in envelope.items if item.payload.json]
+            )
+        return payloads
+
     def reset(self) -> None:
-        self.events = []
+        self.envelopes = []
 
 
 class ReuseException(Exception):
@@ -79,14 +82,17 @@ class ReuseException(Exception):
 
 
 class SentryTestHelper:
-    """Sentry test helper for initializing Sentry and capturing events.
+    """Sentry test helper for initializing Sentry and capturing envelopes.
 
     This helper lets you create new sentry_sdk clients or reuse existing
     configured ones.
 
-    You can access emitted events with the ``.events`` attribute.
+    You can access emitted Envelope instances with the ``.envelopes`` property.
 
-    You can reset the event list with ``.reset()``.
+    You can access just the Envelope item payloads with ``.envelope_payloads``
+    property.
+
+    You can reset the envelope list with ``.reset()``.
 
     """
 
@@ -94,9 +100,14 @@ class SentryTestHelper:
         self._transport = _CaptureTransport()
 
     @property
-    def events(self) -> List[Event]:
-        """Access the event list."""
-        return self._transport.events
+    def envelopes(self) -> List[Envelope]:
+        """Access the captured envelopes list."""
+        return self._transport.envelopes
+
+    @property
+    def envelope_payloads(self) -> List[dict]:
+        """Access list of all the envelope payloads."""
+        return self._transport.envelope_payloads()
 
     def reset(self) -> None:
         """Resets the event list."""
@@ -139,7 +150,7 @@ class SentryTestHelper:
         :raises ReuseException: if there's no sentry client initialized
 
         """
-        client = sentry_sdk.Hub.current.client
+        client = sentry_sdk.get_client()
         if not client:
             raise ReuseException("there is no client to reuse")
 
@@ -158,21 +169,21 @@ class ConfigurationError(Exception):
 
 
 class SaveEvents:
-    """Utility wrapper for saving Sentry events to files on disk.
+    """Utility wrapper for saving Sentry events (envelope payloads) to disk.
 
-    This is for collecting Sentry event data to build tests to verify scrubbing
-    is working as you need it to.
+    This is for collecting Sentry envelope payload data to build tests to
+    verify scrubbing is working as you need it to.
 
     .. Note::
 
-       Capturing Sentry event data and writing tests against that is fragile
-       and not as good as writing integration tests that kick up Sentry events
-       that then get scrubbed.
+       Capturing Sentry envelope payload data and writing tests against that is
+       fragile and not as good as writing integration tests that kick up Sentry
+       envelopes that then get scrubbed.
 
        Make sure to update captured data periodically. This will avoid skew
-       from sentry_sdk updates where they change the shape of the events or
-       what's included in events as well as changes to your code which changes
-       frame-local vars, context data, and so on.
+       from sentry-sdk updates where they change the shape of the envelopes or
+       what's included in envelopes as well as changes to your code which
+       changes frame-local vars, context data, and so on.
 
     Usage::
 
@@ -202,18 +213,28 @@ class SaveEvents:
         return self.wrapped_scrubber(event=event, hint=hint)
 
 
-def diff_event(
+def diff_structure(
     a: Dict[str, Any], b: Dict[str, Any], path: str = ""
 ) -> List[Dict[str, Any]]:
-    """Compares two Sentry event structures.
+    """Compares two Sentry envelope payload json structures.
 
     This supports ``unittest.mock.ANY`` which will always match.
 
     Example::
 
-        # Get an event from the SentryTestHelper.events list and diff it
-        # against the expected event
-        differences = diff_event(event, expected)
+        # Get a payload from the SentryTestHelper.envelope_payloads list and
+        # diff it against the expected envelope item payload
+        payload = sentry_helper.envelope_payloads[0]
+
+        differences = diff_structure(payload, expected)
+        assert differences == []
+
+    Example 2::
+
+        # Get a payload from the envelope directly
+        payload = sentry_helper.envelopes[0].payload.json
+
+        differences = diff_structure(payload, expected)
         assert differences == []
 
 
@@ -250,7 +271,7 @@ def diff_event(
         i = 0
         differences = []
         for item_a, item_b in zip_longest(a, b, fillvalue=None):
-            differences.extend(diff_event(item_a, item_b, f"{path}.[{i}]"))
+            differences.extend(diff_structure(item_a, item_b, f"{path}.[{i}]"))
             i += 1
         return differences
 
@@ -261,7 +282,7 @@ def diff_event(
 
         # Iterate over common keys of both sets
         for key in sorted(keyset_a & keyset_b):
-            differences.extend(diff_event(a[key], b[key], f"{path}.{key}"))
+            differences.extend(diff_structure(a[key], b[key], f"{path}.{key}"))
 
         # Print out missing keys
         delta_keys = keyset_a - keyset_b
