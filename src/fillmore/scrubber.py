@@ -353,7 +353,6 @@ class Scrubber:
         all be coming from the "fillmore.scrubber" logger.
 
         """
-
         for rule in self.rules:
             try:
                 for parent in _get_target_dicts(event, rule.path):
