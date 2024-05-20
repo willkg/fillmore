@@ -6,6 +6,8 @@ History
 
 * Drop support for Django 3.2, 4.1, and 4.2 (#54)
 
+* Add support for Django 5.0 (#53)
+
 
 1.2.0 (November 6th, 2023)
 --------------------------
