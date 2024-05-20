@@ -1,6 +1,12 @@
 History
 =======
 
+1.3.0 (In development)
+----------------------
+
+* Drop support for Django 3.2, 4.1, and 4.2 (#54)
+
+
 1.2.0 (November 6th, 2023)
 --------------------------
 
