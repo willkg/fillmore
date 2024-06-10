@@ -9,7 +9,7 @@ help:
 
 .PHONY: test
 test:  ## Run tests
-	tox
+	tox -p all
 
 .PHONY: typecheck
 typecheck:  ## Run typechecking
@@ -36,7 +36,3 @@ docs:  ## Runs cog and builds Sphinx docs
 	python -m cogapp -d -o docs/scrubber.rst docs_tmpl/scrubber.rst
 	python -m cogapp -d -o docs/testing.rst docs_tmpl/testing.rst
 	make -C docs/ clean html
-
-.PHONY: checkrot
-checkrot:  ## Check package rot for dev dependencies
-	pip list -o
