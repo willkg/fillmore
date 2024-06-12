@@ -1,6 +1,52 @@
 History
 =======
 
+2.0.0 (June 12th, 2024)
+-----------------------
+
+* Support sentry-sdk >2 (#51)
+
+  This reworks fillmore to work with sentry-sdk >2 which made a lot of
+  internal API changes.
+
+  Because of how the sentry-sdk changed, this commit introduces a set of
+  backwards-incompatible changes to fillmore--mostly in the test module:
+
+  * fillmore no longer works with sentry-sdk <2
+
+  * ``fillmore.test.SentryTestHelper`` transport captures envelopes sent to
+    ``/envelope`` and no longer captures events sent to ``/store``
+
+  * removed ``fillmore.test.SentryTestHelper.events`` property and replaced
+    ``fillmore.test.SentryTestHelper.envelopes`` and
+    ``fillmore.test.SentryTestHelper.envelope_payloads``. The latter is much
+    like what ``.events`` returned
+
+    For example, this::
+
+       # stuff happens
+       assert len(sentry_helper.events) == 1
+       assert sentry_helper.events[0] == {
+           "breadcrumbs": ...
+           ...
+       }
+
+    becomes this::
+
+       # stuff happens
+       assert len(sentry_helper.envelopes) == 1
+       assert sentry_helper.envelope_payloads[0] == {
+           "breadcrumbs": ...
+           ...
+       }
+
+  * generalized ``fillmore.test.diff_event`` to
+    ``fillmore.test.diff_structure``
+
+    It works the same, but it's not event-centric anymore. It works
+    with ``envelope.payload.json`` data.
+
+
 1.3.0 (June 10th, 2024)
 -----------------------
 
