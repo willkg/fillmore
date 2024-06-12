@@ -150,14 +150,15 @@ class SentryTestHelper:
         :raises ReuseException: if there's no sentry client initialized
 
         """
-        client = sentry_sdk.get_client()
+        scope = sentry_sdk.Scope.get_current_scope()
+        client = scope.get_client()
         if not client:
             raise ReuseException("there is no client to reuse")
 
         self._transport.reset()
 
         # Clear the breadcrumbs in the scope
-        sentry_sdk.Scope.get_current_scope().clear_breadcrumbs()
+        scope.clear_breadcrumbs()
 
         # Mock the transport with one that captures events
         with patch.object(client, attribute="transport", new=self._transport):
