@@ -1,6 +1,12 @@
 History
 =======
 
+2.0.1 (August 15th, 2024)
+-------------------------
+
+* Fix sentry-sdk deprecation error with ``sentry_sdk.Hub``. (#66)
+
+
 2.0.0 (June 12th, 2024)
 -----------------------
 

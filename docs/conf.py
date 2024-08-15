@@ -28,7 +28,7 @@ sys.path.insert(0, src_root)
 # -- Project information -----------------------------------------------------
 
 project = "Fillmore"
-copyright = "2022, Will Kahn-Greene"
+copyright = "2024, Will Kahn-Greene"
 author = "Will Kahn-Greene"
 
 
