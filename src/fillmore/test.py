@@ -130,13 +130,17 @@ class SentryTestHelper:
            https://docs.sentry.io/platforms/python/configuration/options/
 
         """
-        with sentry_sdk.Hub(None):
-            hub = sentry_sdk.Hub.current
-            client = sentry_sdk.Client(*args, **kwargs)
-            hub.bind_client(client)
+        scope = sentry_sdk.Scope.get_global_scope()
+        client = sentry_sdk.Client(*args, **kwargs)
+        scope.set_client(client)
 
-            self._transport.reset()
-            client.transport = self._transport
+        self._transport.reset()
+
+        # Clear the breadcrumbs in the scope
+        scope.clear_breadcrumbs()
+
+        # Mock the transport with one that captures events
+        with patch.object(client, attribute="transport", new=self._transport):
             yield self
 
     @contextmanager
@@ -258,7 +262,7 @@ def diff_structure(
     if a is ANY or b is ANY:
         return []
 
-    if type(a) != type(b):
+    if type(a) is not type(b):
         return [
             {
                 "msg": f"different types a:{type(a)} b:{type(b)}",

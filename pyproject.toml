@@ -9,7 +9,7 @@ license = {text = "MPLv2"}
 requires-python = ">=3.8"
 dependencies = [
     "attrs>=21.2.0",
-    "sentry-sdk>2",
+    "sentry-sdk>=2",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -85,6 +85,7 @@ legacy_tox_ini = """
 [tox]
 isolated_build = True
 envlist =
+    py38-sentry2,
     py{38,39}-django{none,42},
     py310-django{none,42,50},
     py{311,312}-django{none,42,50},
@@ -102,6 +103,7 @@ python =
 
 [testenv]
 deps =
+    sentry2: sentry-sdk==2.0.0
     django42: Django>=4.2,<5.0
     django50: Django>=5.0,<5.1
 extras = dev
