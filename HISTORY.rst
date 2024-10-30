@@ -1,8 +1,8 @@
 History
 =======
 
-2.1.0 (in development)
-----------------------
+2.1.0 (October 30th, 2024)
+--------------------------
 
 * Drop support for Python 3.8. (#72)
 * Fix issue with cookie scrubbing. (#73)
