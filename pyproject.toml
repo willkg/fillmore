@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 urls.Homepage = "https://github.com/willkg/fillmore"
@@ -85,8 +86,8 @@ legacy_tox_ini = """
 isolated_build = True
 envlist =
     py39-django{none,42},
-    py310-django{none,42,50},
-    py{311,312}-django{none,42,50},
+    py{310,311,312}-django{none,42,50},
+    py313-django{none,51},
     py39-lint,
     py39-typecheck,
     py39-examples
@@ -103,6 +104,7 @@ deps =
     sentry2: sentry-sdk==2.0.0
     django42: Django>=4.2,<5.0
     django50: Django>=5.0,<5.1
+    django51: Django>=5.1,<5.2
 extras = dev
 commands = pytest tests/ {posargs}
 

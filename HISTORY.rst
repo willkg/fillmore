@@ -5,6 +5,9 @@ History
 ----------------------
 
 * Drop support for Python 3.8. (#72)
+* Fix issue with cookie scrubbing. (#73)
+* Add support for Python 3.13. (#71)
+* Add support for Django 5.1. (#78)
 
 
 2.0.1 (August 15th, 2024)
