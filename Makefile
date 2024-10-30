@@ -13,15 +13,15 @@ test:  ## Run tests
 
 .PHONY: typecheck
 typecheck:  ## Run typechecking
-	tox -e py38-typecheck
+	tox -e py39-typecheck
 
 .PHONY: format
 format:  ## Format files
-	tox exec -e py38-lint -- ruff format
+	tox exec -e py39-lint -- ruff format
 
 .PHONY: lint
 lint:  ## Lint files
-	tox -e py38-lint
+	tox -e py39-lint
 
 .PHONY: clean
 clean:  ## Clean build artifacts

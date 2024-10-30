@@ -1,6 +1,12 @@
 History
 =======
 
+2.1.0 (in development)
+----------------------
+
+* Drop support for Python 3.8. (#72)
+
+
 2.0.1 (August 15th, 2024)
 -------------------------
 
