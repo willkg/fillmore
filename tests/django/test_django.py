@@ -98,18 +98,14 @@ def test_scrub_request_querystring(sentry_helper, client):
 def test_scrub_request_cookies(sentry_helper, client):
     """Test scrubbing cookies
 
-    NOTE(willkg): Cookie data is only sent when send_default_pii=True and it
-    gets sent in both the request.headers.Cookie field as well as the
-    request.cookies field.
+    NOTE(willkg): Cookie data is only sent when send_default_pii=True.
+    sentry-sdk scrubs the request.headers.Cookie replacing the entire value
+    with "[Filtered]". Fillmore scrubs the cookie values in request.cookies, so
+    we test that here.
 
     """
     scrubber = Scrubber(
         rules=[
-            Rule(
-                path="request.headers",
-                keys=["Cookie"],
-                scrub=build_scrub_cookies(params=["csrftoken", "sessionid"]),
-            ),
             Rule(
                 path="request",
                 keys=["cookies"],
@@ -134,14 +130,7 @@ def test_scrub_request_cookies(sentry_helper, client):
 
         (payload,) = sentry_client.envelope_payloads
 
-        cookie_header = list(
-            sorted(payload["request"]["headers"]["Cookie"].split("; "))
-        )
-        assert cookie_header == [
-            "csrftoken=[Scrubbed]",
-            "foo=bar",
-            "sessionid=[Scrubbed]",
-        ]
+        # Fillmore scrubs the cookies structure.
         assert payload["request"]["cookies"] == {
             "csrftoken": "[Scrubbed]",
             "foo": "bar",

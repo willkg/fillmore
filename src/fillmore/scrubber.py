@@ -70,22 +70,24 @@ def build_scrub_cookies(params: List[str]) -> Callable:
             return value
 
         has_scrubbed_item = False
-        scrubbed_pairs = []
+        scrubbed_parts = []
         for cookie in value.split(";"):
-            name, val = cookie.split("=", 1)
-            name = name.strip()
-            val = val.strip()
+            if "=" in cookie:
+                name, val = cookie.split("=", 1)
+                name = name.strip()
+                val = val.strip()
 
-            if to_scrub is ALL_COOKIE_KEYS or name in to_scrub:
-                if val:
-                    val = MASK_TEXT
-                    has_scrubbed_item = True
-            scrubbed_pairs.append((name, val))
+                if to_scrub is ALL_COOKIE_KEYS or name in to_scrub:
+                    if val:
+                        val = MASK_TEXT
+                        has_scrubbed_item = True
+                cookie = f"{name}={val}"
+            scrubbed_parts.append(cookie)
 
         if not has_scrubbed_item:
             return value
 
-        return "; ".join(["=".join(pair) for pair in scrubbed_pairs])
+        return "; ".join(scrubbed_parts)
 
     return _scrub_cookies
 
