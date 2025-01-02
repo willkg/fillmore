@@ -51,7 +51,7 @@ Both of those create new contexts and clear the event list. You can create
 multiple contexts in a single test.
 
 Calling *init* or *reuse* returns an object that keeps track of what events
-were emitted and stores them as a list in the ``.events`` property.
+were emitted and stores them as a list in the ``.envelopes`` property.
 
 Here's an example test using ``unittest``:
 
@@ -73,8 +73,8 @@ Here's an example test using ``unittest``:
            with sentry_test_helper.reuse() as sentry_client:
                kick_up_exception()
 
-               (event,) = sentry_client.events
-               error = event["exception"]["values"][0]
+               (payload,) = sentry_client.envelope_payloads
+               error = payload["exception"]["values"][0]
                self.assertEqual(error["type"], "Exception")
                self.assertEqual(error["value"], "internal exception")
                self.assertEqual(
@@ -99,9 +99,9 @@ Here's an example test using pytest:
        with sentry_helper.reuse() as sentry_client:
            kick_up_exception()
 
-           # Assert things against the Sentry event records
-           (event,) = sentry_client.events
-           error = event["exception"]["values"][0]
+           # Assert things against the Sentry envelopes
+           (payload,) = sentry_client.envelope_payloads
+           error = payload["exception"]["values"][0]
            assert error["type"] == "Exception"
            assert error["value"] == "internal exception"
            assert error["stacktrace"]["frames"][0]["vars"]["username"] == "[Scrubbed]"

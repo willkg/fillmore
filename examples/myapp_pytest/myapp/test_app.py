@@ -10,8 +10,8 @@ def test_scrubber(sentry_helper, caplog):
         kick_up_exception()
 
         # Assert things against the Sentry event records
-        (event,) = sentry_client.events
-        error = event["exception"]["values"][0]
+        (payload,) = sentry_client.envelope_payloads
+        error = payload["exception"]["values"][0]
         assert error["type"] == "Exception"
         assert error["value"] == "internal exception"
         assert error["stacktrace"]["frames"][0]["vars"]["username"] == "[Scrubbed]"

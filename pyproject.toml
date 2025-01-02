@@ -45,6 +45,7 @@ dev = [
     "tomli; python_version < '3.11'",
     "tox",
     "tox-gh-actions",
+    "tox-uv",
     "twine",
     "Werkzeug",
 ]
@@ -91,6 +92,7 @@ envlist =
     py39-lint,
     py39-typecheck,
     py39-examples
+uv_python_preference = only-managed
 
 [gh-actions]
 python =

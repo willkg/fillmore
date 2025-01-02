@@ -5,3 +5,4 @@ src/fillmore.egg-info/
 __pycache__
 .python-version
 docs/_build/
+uv.lock
