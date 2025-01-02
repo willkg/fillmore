@@ -119,8 +119,8 @@ You can test it like this::
             with sentry_test_helper.reuse() as sentry_client:
                 kick_up_exception()
 
-                (event,) = sentry_client.events
-                error = event["exception"]["values"][0]
+                (payload,) = sentry_client.envelope_payloads
+                error = payload["exception"]["values"][0]
                 self.assertEqual(error["type"], "Exception")
                 self.assertEqual(error["value"], "internal exception")
                 self.assertEqual(
