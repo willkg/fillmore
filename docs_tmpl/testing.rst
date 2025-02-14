@@ -82,9 +82,9 @@ Here's an example test using pytest:
 Integration testing against Kent--a fakesentry service
 ======================================================
 
-`Kent <https://github.com/willkg/kent>`__ is a service that you can run in CI
-or on your development machine which can accept Sentry event submissions and
-has an API to let you programmatically examine them.
+`Kent <https://github.com/mozilla-services/kent>`__ is a service that you can
+run in CI or on your development machine which can accept Sentry event
+submissions and has an API to let you programmatically examine them.
 
 Because Kent is keeping the entire event payload, you know exactly what got
 sent and you can hone your scrubbing accordingly.

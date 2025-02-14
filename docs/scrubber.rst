@@ -80,9 +80,10 @@ payload as well as a schema.
 Capturing Sentry event payloads
 -------------------------------
 
-You can set your application up to send data to a "fake sentry" like `Kent
-<https://github.com/willkg/kent/>`__ and capture Sentry events to know exactly
-what data is getting sent and where in the payload it is.
+You can set your application up to send data to a "fake sentry" like
+`Kent <https://github.com/mozilla-services/kent/>`__ and capture Sentry
+events to know exactly what data is getting sent and where in the payload
+it is.
 
 
 Sentry event schema

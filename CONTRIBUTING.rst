@@ -7,20 +7,20 @@ Code of Conduct
 
 This project and repository is governed by Mozilla's code of conduct and
 etiquette guidelines. For more details please see the `CODE_OF_CONDUCT.md file
-<https://github.com/willkg/fillmore/blob/main/CODE_OF_CONDUCT.md>`_.
+<https://github.com/mozilla-services/fillmore/blob/main/CODE_OF_CONDUCT.md>`__.
 
 
 Development, conventions, etc
 =============================
 
-All our documentation is at `<https://fillmore.readthedocs.io/>`_.
+All our documentation is at `<https://fillmore.readthedocs.io/>`__.
 
 
 Reporting Bugs
 ==============
 
-For regular bugs, please report them `in the issue tracker
-<https://github.com/willkg/fillmore/issues>`_.
+For regular bugs, please report them
+`in the issue tracker <https://github.com/mozilla-services/fillmore/issues>`__.
 
 
 Maintenance promise
