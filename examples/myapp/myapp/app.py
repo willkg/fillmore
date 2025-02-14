@@ -1,4 +1,4 @@
-# myapp/app.py
+# examples/myapp/myapp/app.py
 import logging
 import logging.config
 
