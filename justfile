@@ -18,7 +18,7 @@ typecheck: devenv
 
 # Format files
 format: devenv
-    uv run tox -e py39-lint -- ruff format
+    uv run tox exec -e py39-lint -- ruff format
 
 # Lint files
 lint: devenv
@@ -35,7 +35,7 @@ clean:
 
 # Runs cog and builds Sphinx docs
 docs: devenv
-    uv run python -m cogapp -d -o README.rst docs_tmpl/README.rst
-    uv run python -m cogapp -d -o docs/scrubber.rst docs_tmpl/scrubber.rst
-    uv run python -m cogapp -d -o docs/testing.rst docs_tmpl/testing.rst
+    uv run python -m cogapp -r README.rst
+    uv run python -m cogapp -r docs/scrubber.rst
+    uv run python -m cogapp -r docs/testing.rst
     SPHINXBUILD={{sphinxbuild}} make -e -C docs/ clean html

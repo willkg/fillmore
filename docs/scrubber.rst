@@ -21,10 +21,20 @@ frame-local variables with the name ``password``.
 
 Example:
 
+.. [[[cog
+   import cog
+   cog.outl("\n.. code-block:: python\n")
+   with open("examples/scrubber/webapp_scrubber.py", "r") as fp:
+       for line in fp:
+           cog.out(f"   {line}")
+   cog.outl("")
+   ]]]
+
 .. code-block:: python
 
+   # examples/scrubber/webapp_scrubber.py
    from fillmore.scrubber import Scrubber, Rule, build_scrub_cookies
-
+   
    # Create a Scrubber
    scrubber = Scrubber(
        rules=[
@@ -50,6 +60,8 @@ Example:
            ),
        ],
    )
+
+.. [[[end]]]
 
 
 Things to know about scrubbing:
@@ -221,11 +233,23 @@ If the scrubbing code is kicking up exceptions, then Fillmore will log
 exceptions to the ``fillmore`` logger. Make sure to set up Python logging
 and set the ``fillmore`` logger to ``logging.ERROR``:
 
-.. code-block:: python
+.. [[[cog
+   import cog
+   cog.outl("\n.. code-block::\n")
+   with open("examples/scrubber/fillmore_logging.py", "r") as fp:
+       for line in fp:
+           cog.out(f"   {line}")
+   cog.outl("")
+   ]]]
 
+.. code-block::
+
+   # examples/scrubber/fillmore_logging.py
    import logging
-
+   
    logging.getLogger("fillmore").setLevel(logging.ERROR)
+
+.. [[[end]]]
 
 
 How does it work?

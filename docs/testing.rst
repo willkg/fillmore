@@ -55,16 +55,25 @@ were emitted and stores them as a list in the ``.events`` property.
 
 Here's an example test using ``unittest``:
 
+.. [[[cog
+   import cog
+   cog.outl("\n.. code-block:: python\n")
+   with open("examples/myapp/myapp/test_app.py", "r") as fp:
+       for line in fp:
+           cog.out(f"   {line}")
+   cog.outl("")
+   ]]]
+
 .. code-block:: python
 
    # myapp/test_app.py
    import unittest
-
+   
    from fillmore.test import SentryTestHelper
-
+   
    from myapp.app import kick_up_exception
-
-
+   
+   
    class TestApp(unittest.TestCase):
        def test_scrubber(self):
            # Reuse the existing Sentry configuration and set up the helper
@@ -72,7 +81,7 @@ Here's an example test using ``unittest``:
            sentry_test_helper = SentryTestHelper()
            with sentry_test_helper.reuse() as sentry_client:
                kick_up_exception()
-
+   
                (payload,) = sentry_client.envelope_payloads
                error = payload["exception"]["values"][0]
                self.assertEqual(error["type"], "Exception")
@@ -81,36 +90,49 @@ Here's an example test using ``unittest``:
                    error["stacktrace"]["frames"][0]["vars"]["username"], "[Scrubbed]"
                )
 
+.. [[[end]]]
+
 
 Fillmore also provides a `pytest <https://docs.pytest.org/en/7.1.x/>`__ fixture.
 
 Here's an example test using pytest:
 
+.. [[[cog
+   import cog
+   cog.outl("\n.. code-block:: python\n")
+   with open("examples/myapp_pytest/myapp/test_app.py", "r") as fp:
+       for line in fp:
+           cog.out(f"   {line}")
+
+   cog.outl("")
+   ]]]
+
 .. code-block:: python
 
-   # myapp_pytest/test_app.py
-
+   # examples/myapp_pytest/myapp/test_app.py
    from myapp.app import kick_up_exception
-
-
+   
+   
    def test_scrubber(sentry_helper, caplog):
        # Reuse the existing Sentry configuration and set up the helper
        # to capture Sentry events
        with sentry_helper.reuse() as sentry_client:
            kick_up_exception()
-
+   
            # Assert things against the Sentry event records
            (payload,) = sentry_client.envelope_payloads
            error = payload["exception"]["values"][0]
            assert error["type"] == "Exception"
            assert error["value"] == "internal exception"
            assert error["stacktrace"]["frames"][0]["vars"]["username"] == "[Scrubbed]"
-
+   
            # Assert things against the logging messages created
            fillmore_records = [
                rec for rec in caplog.record_tuples if rec[0].startswith("fillmore")
            ]
            assert len(fillmore_records) == 0
+
+.. [[[end]]]
 
 
 Integration testing against Kent--a fakesentry service
@@ -129,57 +151,71 @@ multiple services.
 For example, if you set Kent up at ``http://public@localhost:8090/0`` and you
 had ``SENTRY_DSN`` set to that dsn, then you could access it like this:
 
+.. [[[cog
+    import cog
+    cog.outl("\n.. code-block:: python\n")
+    with open("examples/testing/kent_testing.py", "r") as fp:
+        for line in fp:
+            cog.out(f"   {line}")
+
+    cog.outl("")
+   ]]]
+
 .. code-block:: python
 
+   # examples/testing/kent_testing.py
    import time
-
+   
    from fillmore.test import get_sentry_base_url, SentryTestHelper
    import requests
+   
    # Use the werkzeug wsgi client because the Django test client fakes
    # everything
    from werkzeug.test import Client
-
+   
    from django.conf import settings
-
+   
    from myapp.wsgi import application
-
-
+   
+   
    def test_sentry_with_kent():
        sentry_helper = SentryTestHelper()
        client = Client(application)
        kent_api = get_sentry_base_url(settings.SENTRY_DSN)
-
+   
        # Flush the events from Kent and assert there are 0
        resp = requests.post(f"{kent_api}api/flush/")
        assert resp.status_code == 200
        resp = requests.get(f"{kent_api}api/errorlist/")
        assert len(resp.json()["errors"]) == 0
-
+   
        # reuse uses an existing configured Sentry client, but mocks the
-       # transport so you can assert things against the Sentry events 
+       # transport so you can assert things against the Sentry events
        # generated
-       with sentry_helper.reuse() as sentry_client:
+       with sentry_helper.reuse():
            resp = client.get("/broken")
            assert resp.status_code == 500
-
+   
            # Give sentry_sdk a chance to send the events to Kent
            time.sleep(1)
-
+   
            # Get the event list and then the event itself
            resp = requests.get(f"{kent_api}api/errorlist/")
            event_data = resp.json()["errors"]
            assert len(event_data) == 1
            error_id = event_data[0]
-
+   
            resp = requests.get(f"{kent_api}api/error/{error_id}")
            event = resp.json()["payload"]
-
+   
            # Assert things against the event
            assert "django" in event["sdk"]["integrations"]
            assert "request" in event
            assert event["request"]["headers"]["Auth-Token"] == "[Scrubbed]"
-
+   
            # FIXME: Assert that Fillmore didn't log any exceptions
+
+.. [[[end]]]
 
 
 Check logging for errors
