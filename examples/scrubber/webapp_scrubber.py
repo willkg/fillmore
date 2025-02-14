@@ -1,3 +1,4 @@
+# examples/scrubber/webapp_scrubber.py
 from fillmore.scrubber import Scrubber, Rule, build_scrub_cookies
 
 # Create a Scrubber

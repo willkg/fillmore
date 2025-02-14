@@ -1,5 +1,4 @@
-# myapp_pytest/test_app.py
-
+# examples/myapp_pytest/myapp/test_app.py
 from myapp.app import kick_up_exception
 
 
