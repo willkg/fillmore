@@ -1,4 +1,4 @@
-# myapp/test_app.py
+# examples/myapp/myapp/test_app.py
 import unittest
 
 from fillmore.test import SentryTestHelper
