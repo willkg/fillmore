@@ -51,7 +51,7 @@ Both of those create new contexts and clear the event list. You can create
 multiple contexts in a single test.
 
 Calling *init* or *reuse* returns an object that keeps track of what events
-were emitted and stores them as a list in the ``.envelopes`` property.
+were emitted and stores them as a list in the ``.events`` property.
 
 Here's an example test using ``unittest``:
 
@@ -99,7 +99,7 @@ Here's an example test using pytest:
        with sentry_helper.reuse() as sentry_client:
            kick_up_exception()
 
-           # Assert things against the Sentry envelopes
+           # Assert things against the Sentry event records
            (payload,) = sentry_client.envelope_payloads
            error = payload["exception"]["values"][0]
            assert error["type"] == "Exception"
@@ -116,9 +116,9 @@ Here's an example test using pytest:
 Integration testing against Kent--a fakesentry service
 ======================================================
 
-`Kent <https://github.com/willkg/kent>`__ is a service that you can run in CI
-or on your development machine which can accept Sentry event submissions and
-has an API to let you programmatically examine them.
+`Kent <https://github.com/mozilla-services/kent>`__ is a service that you can
+run in CI or on your development machine which can accept Sentry event
+submissions and has an API to let you programmatically examine them.
 
 Because Kent is keeping the entire event payload, you know exactly what got
 sent and you can hone your scrubbing accordingly.

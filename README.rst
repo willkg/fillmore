@@ -6,8 +6,8 @@ The Python sentry-sdk has a before_send hook that lets you scrub Sentry events
 before they're sent. Fillmore makes it easier to set up a before_send scrubber
 and test it.
 
-:Code:          https://github.com/willkg/fillmore
-:Issues:        https://github.com/willkg/fillmore/issues
+:Code:          https://github.com/mozilla-services/fillmore
+:Issues:        https://github.com/mozilla-services/fillmore/issues
 :License:       MPL v2
 :Documentation: https://fillmore.readthedocs.io/
 

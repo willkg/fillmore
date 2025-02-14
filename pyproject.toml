@@ -25,10 +25,10 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-urls.Homepage = "https://github.com/willkg/fillmore"
+urls.Homepage = "https://github.com/mozilla-services/fillmore"
 urls.Documentation = "https://fillmore.readthedocs.io/"
-urls.Source = "https://github.com/willkg/fillmore/"
-urls.Issues = "https://github.com/willkg/fillmore/issues"
+urls.Source = "https://github.com/mozilla-services/fillmore/"
+urls.Issues = "https://github.com/mozilla-services/fillmore/issues"
 
 [project.entry-points.pytest11]
 fillmore = "fillmore.pytest_plugin"
